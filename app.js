@@ -1828,7 +1828,7 @@ function scoreCoachAgainstStar(cand, star) {
 
 // Render Coach Replacement Recommendations
 function renderCoachRecommendations() {
-  const grid = document.getElementById('recommendationsGrid');
+  const grid = document.getElementById('recCardsGrid');
   if (!grid || !engineData) return;
   grid.innerHTML = '';
 
@@ -1873,6 +1873,16 @@ function renderCoachRecommendations() {
     if (!a.is_custom_pinned && b.is_custom_pinned) return 1;
     return b.composite_match_score - a.composite_match_score;
   });
+
+  const countBadge = document.getElementById('filteredCandidatesCount');
+  if (countBadge) {
+    countBadge.textContent = `${filtered.length} Managers Qualified`;
+  }
+
+  const sectionLabel = document.getElementById('recsSectionLabel');
+  if (sectionLabel) {
+    sectionLabel.textContent = '👔 Recommended Drop-In Manager Replacements';
+  }
 
   if (!currentCoachCandidate || !filtered.some(c => c.name === currentCoachCandidate.name)) {
     currentCoachCandidate = filtered[0] || null;

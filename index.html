@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Tactical Void & Drop-In Replacement Engine | RFF @ 26</title>
+  <meta name="description" content="Quantifying post-departure tactical voids and recommending budget-compliant drop-in tactical replacements using Transfermarkt data.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    
+    <!-- Top Hero Header -->
+    <header class="hero-header">
+      <div class="hero-badge-wrap">
+        <span class="engine-badge" id="engineStatusBadge">The Tactical Void & Drop-In Replacement Engine</span>
+        <span class="engine-badge" style="border-color: rgba(139,92,246,0.35); color: var(--accent-purple);" id="engineSubBadge">1.89M Player Appearances • 176K Manager Matches</span>
+      </div>
+
+      <!-- Entity Mode Switcher: Player Mode vs Head Coach Mode -->
+      <div class="mode-switcher-container">
+        <button class="mode-tab-btn active" id="btnModePlayers" title="Scout drop-in replacements for departing star footballers">
+          <span class="mode-tab-icon">⚽</span>
+          <span class="mode-tab-text">Player Replacement Engine</span>
+          <span class="mode-tab-pill" id="pillPlayerCount">44 Dossiers</span>
+        </button>
+        <button class="mode-tab-btn" id="btnModeCoaches" title="Scout drop-in replacements for departing head coaches & managers">
+          <span class="mode-tab-icon">👔</span>
+          <span class="mode-tab-text">Manager & Head Coach Engine</span>
+          <span class="mode-tab-pill coach-pill" id="pillCoachCount">16 Dossiers</span>
+        </button>
+      </div>
+
+      <h1 class="hero-title" id="mainHeroTitle">The Tactical Void & Drop-In Replacement Engine</h1>
+      <p class="hero-subtitle" id="mainHeroSubtitle">
+        Quantifying the sporting decline left behind when superstar talents depart, and recommending optimal, budget-compliant drop-in replacements through multi-dimensional tactical vector similarity.
+      </p>
+    </header>
+
+    <!-- Search & Horizon Planning Control Bar -->
+    <div class="player-search-wrap">
+      <div class="search-input-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="playerSearchInput" placeholder="Search any player to scout replacements (e.g. Salah, De Bruyne, Saka, Yamal, Messi, Mbappe)..." autocomplete="off">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+      <div class="horizon-toggle-bar">
+        <button class="horizon-btn active" id="btnHorizonImmediate" title="Immediate replacements ready to start right now">
+          <span>⚡ Immediate Like-for-Like</span>
+        </button>
+        <button class="horizon-btn" id="btnHorizonSuccession" title="Young emerging talents aged 17-23 to groom over 2-3 seasons">
+          <span>🔮 2-3 Year Succession Horizon</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Marquee Departure & Succession Dossiers Selector Track -->
+    <section class="departure-section" aria-label="Marquee Transfers & Succession Dossiers">
+      <div class="section-label-bar">
+        <div class="category-tabs-track" id="categoryTabsTrack">
+          <button class="cat-tab-btn active" id="tabAll">All Dossiers (44)</button>
+          <button class="cat-tab-btn" id="tabSeason2627">🔥 26/27 Season Departures (12)</button>
+          <button class="cat-tab-btn" id="tabHistorical">Historical Departures (13)</button>
+          <button class="cat-tab-btn" id="tabSuccession">Succession Planning (19)</button>
+        </div>
+        <span id="transferCountLabel" style="font-size: 0.8rem; color: var(--accent-cyan); font-weight: 700;">44 High-Impact Dossiers</span>
+      </div>
+      <div class="player-chips-track" id="departureChipsTrack">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Main Tactical Intelligence Grid: Left Void / Right Benchmark -->
+    <section class="tactical-grid">
+      
+      <!-- Left Card: Post-Departure Void Analysis -->
+      <article class="glass-card void-card" id="voidAnalysisCard">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">
+              <span>📉 Post-Departure Tactical Void</span>
+            </h2>
+            <div class="card-subtext" id="voidSubtext">Club performance impact in 25 games post-departure</div>
+          </div>
+          <div id="voidSeverityPill" class="severity-pill severity-moderate">
+            Moderate Deficit
+          </div>
+        </div>
+
+        <!-- Void Severity Meter -->
+        <div class="meter-container">
+          <div class="meter-header">
+            <span>Tactical Void Severity Index</span>
+            <span class="meter-value-large" id="voidSeverityValue">73.1 / 100</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill" id="voidMeterFill" style="width: 73.1%;"></div>
+          </div>
+          <p class="meter-desc" id="voidSeverityDesc">
+            Noticeable drop in offensive dynamism or defensive stability without the talisman.
+          </p>
+        </div>
+
+        <!-- Void Comparative Statistics Grid -->
+        <div class="void-stats-grid">
+          
+          <div class="stat-metric-card">
+            <span class="metric-title">Points Per Game (PPG)</span>
+            <div class="metric-row">
+              <span class="metric-pre-post" id="ppgPrePost">2.08 ➔ <strong>1.76</strong></span>
+              <span class="delta-pill neg" id="ppgDelta">-0.32</span>
+            </div>
+          </div>
+
+          <div class="stat-metric-card">
+            <span class="metric-title">Win Rate (%)</span>
+            <div class="metric-row">
+              <span class="metric-pre-post" id="winRatePrePost">64.0% ➔ <strong>48.0%</strong></span>
+              <span class="delta-pill neg" id="winRateDelta">-16.0%</span>
+            </div>
+          </div>
+
+          <div class="stat-metric-card">
+            <span class="metric-title">Goals Scored / Match</span>
+            <div class="metric-row">
+              <span class="metric-pre-post" id="gfPrePost">2.52 ➔ <strong>1.76</strong></span>
+              <span class="delta-pill neg" id="gfDelta">-0.76</span>
+            </div>
+          </div>
+
+          <div class="stat-metric-card">
+            <span class="metric-title">Goals Conceded / Match</span>
+            <div class="metric-row">
+              <span class="metric-pre-post" id="gaPrePost">1.36 ➔ <strong>1.28</strong></span>
+              <span class="delta-pill pos" id="gaDelta">-0.08</span>
+            </div>
+          </div>
+
+          <div class="stat-metric-card">
+            <span class="metric-title">Clean Sheet Rate</span>
+            <div class="metric-row">
+              <span class="metric-pre-post" id="csPrePost">28.0% ➔ <strong>28.0%</strong></span>
+              <span class="delta-pill neutral" id="csDelta">+0.0%</span>
+            </div>
+          </div>
+
+          <div class="stat-metric-card">
+            <span class="metric-title">Primary Tactical Formation</span>
+            <div class="metric-row">
+              <span class="metric-pre-post" id="formationPrePost" style="font-size: 0.8rem;">4-3-3 ➔ <strong>4-2-3-1</strong></span>
+              <span class="delta-pill neutral">System Shift</span>
+            </div>
+          </div>
+
+        </div>
+      </article>
+
+      <!-- Right Card: Star Profile & Benchmark -->
+      <article class="glass-card" id="starBenchmarkCard">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">
+              <span>👤 Departed Star Benchmark</span>
+            </h2>
+            <div class="card-subtext">Baseline tactical output required for drop-in replacement</div>
+          </div>
+          <div class="severity-pill" style="background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.4); color: var(--accent-cyan);" id="starFeeTag">
+            €127.0M Fee
+          </div>
+        </div>
+
+        <div class="star-profile-box">
+          <div class="star-avatar-wrapper">
+            <img id="starPhoto" class="star-photo-avatar" src="" alt="Star Player" style="display: none;" onerror="this.style.display='none'; document.getElementById('starAvatar').style.display='flex';" />
+            <div class="star-avatar-big" id="starAvatar">JB</div>
+          </div>
+          <div>
+            <h3 class="star-text-title" id="starName">Jude Bellingham</h3>
+            <p class="star-text-meta" id="starMeta">Borussia Dortmund ➔ Real Madrid (July 2023)</p>
+            <p class="star-text-meta" id="starRoleTag" style="color: var(--accent-cyan); font-weight: 600; margin-top: 0.2rem;">
+              Box-to-Box Engine & Creative Conductor
+            </p>
+          </div>
+        </div>
+
+        <div class="star-metric-pills">
+          <div class="pill-stat">
+            <div class="pill-stat-val" id="starG90">0.47</div>
+            <div class="pill-stat-lbl">Goals / 90</div>
+          </div>
+          <div class="pill-stat">
+            <div class="pill-stat-val" id="starA90">0.30</div>
+            <div class="pill-stat-lbl">Assists / 90</div>
+          </div>
+          <div class="pill-stat">
+            <div class="pill-stat-val" id="starGA90">0.77</div>
+            <div class="pill-stat-lbl">G+A / 90</div>
+          </div>
+          <div class="pill-stat">
+            <div class="pill-stat-val" id="starMinApp">57.8</div>
+            <div class="pill-stat-lbl">Min / App</div>
+          </div>
+        </div>
+
+        <!-- Star Contract, Agent, Wages, and National Team Dossier -->
+        <div class="star-dossier-grid">
+          <div class="dossier-pill">
+            <span class="dossier-lbl">👔 Current Agent</span>
+            <span class="dossier-val" id="starAgentName">Family / Direct</span>
+          </div>
+          <div class="dossier-pill">
+            <span class="dossier-lbl">📄 Contract Status</span>
+            <span class="dossier-val" id="starContractStatus">Expires June 2029</span>
+          </div>
+          <div class="dossier-pill">
+            <span class="dossier-lbl">💰 Estimated Wage</span>
+            <span class="dossier-val" id="starWages">€220K / wk</span>
+          </div>
+          <div class="dossier-pill">
+            <span class="dossier-lbl">🌍 National Team</span>
+            <span class="dossier-val" id="starNatTeam">England (53 Caps)</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; background: rgba(15,23,42,0.5); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1rem;">
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">Tactical System Compatibility</div>
+          <p style="font-size: 0.88rem; color: var(--text-secondary);" id="systemCompatibilityText">
+            The candidate recommender is filtering players capable of replicating this output within <strong>4-3-3 Attacking</strong> while staying under the received transfer fee budget.
+          </p>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- 4-Step Player Replacement Analysis Framework Walkthrough Card -->
+    <section class="framework-stepper-card" id="frameworkCard">
+      <div class="framework-stepper-header">
+        <div class="framework-title-wrap">
+          <span style="font-size: 1.3rem;">🧠</span>
+          <h2 class="framework-main-title">The Player Replacement Analysis Framework</h2>
+        </div>
+        <span class="framework-step-badge">4-Step Scientific Scouting Pipeline</span>
+      </div>
+
+      <div class="steps-grid">
+        <!-- Step 1 -->
+        <div class="step-card">
+          <div class="step-num-pill">
+            <span>STEP 01</span>
+            <span>➔</span>
+          </div>
+          <h3 class="step-name">Identify Departing Role</h3>
+          <p class="step-desc">
+            Determine position, tactical archetype (e.g. inside forward vs wide winger, false nine vs box poacher), preferred foot, system formation, and minutes load.
+          </p>
+          <div class="step-dynamic-tag" id="step1DynamicTag">
+            Target: Central Midfield • Box-to-Box Engine
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+          <div class="step-num-pill">
+            <span>STEP 02</span>
+            <span>➔</span>
+          </div>
+          <h3 class="step-name">Collect Performance Data</h3>
+          <p class="step-desc">
+            Aggregate appearances, minutes, goals, assists, xG/xA models, passing volume, ball recoveries, duel engagement, and disciplinary availability.
+          </p>
+          <div class="step-dynamic-tag" id="step2DynamicTag">
+            Data: 1.89M Appearances • 20,480 Profiles
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+          <div class="step-num-pill">
+            <span>STEP 03</span>
+            <span>➔</span>
+          </div>
+          <h3 class="step-name">Like-for-Like Comparison</h3>
+          <p class="step-desc">
+            Compare normalized per-90 metrics tailored to position. Rank candidates against empirical European percentiles (0-99th percentile) to avoid raw total bias.
+          </p>
+          <div class="step-dynamic-tag" id="step3DynamicTag">
+            Position-Specific Per-90 & Percentile Bars
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-card">
+          <div class="step-num-pill">
+            <span>STEP 04</span>
+            <span>✓</span>
+          </div>
+          <h3 class="step-name">Rank Replacements</h3>
+          <p class="step-desc">
+            Calculate weighted composite score: role metric fit (42%), system formation (20%), financial fee arbitrage (20%), and youth longevity headroom (15%).
+          </p>
+          <div class="step-dynamic-tag" id="step4DynamicTag">
+            Ranked by Composite Suitability Index
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scouting Controls / Filters -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="filter-label">Max Budget Cap (% of Fee):</span>
+        <div class="slider-wrap">
+          <input type="range" class="range-slider" id="budgetSlider" min="20" max="100" value="100" step="5">
+          <span class="slider-val-tag" id="budgetSliderVal">100%</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Max Age:</span>
+        <div class="slider-wrap">
+          <input type="range" class="range-slider" id="ageSlider" min="18" max="36" value="32" step="1">
+          <span class="slider-val-tag" id="ageSliderVal">32 yrs</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Min Match Score:</span>
+        <div class="slider-wrap">
+          <input type="range" class="range-slider" id="scoreSlider" min="60" max="95" value="70" step="1">
+          <span class="slider-val-tag" id="scoreSliderVal">70%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drop-In Replacements Grid -->
+    <section class="replacements-section" aria-label="Drop-in Tactical Replacements">
+      <div class="section-label-bar">
+        <span class="section-label" id="recsSectionLabel">🎯 Recommended Drop-In Tactical Replacements</span>
+        <span id="filteredCandidatesCount" style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 700;">8 Candidates Found</span>
+      </div>
+
+      <!-- Custom Player Scouting & Comparison Bar -->
+      <div class="custom-scout-bar">
+        <input type="text" class="custom-scout-input" id="customCandInput" placeholder="➕ Scout & pin ANY player from 1,200 database to compare (e.g. Arda Güler, Mainoo, Mathys Tel, Elliott)..." autocomplete="off">
+        <button class="custom-scout-btn" id="btnAddCustomCand">+ Add to Radar</button>
+        <div class="search-dropdown" id="customCandDropdown" style="top: calc(100% + 4px);"></div>
+      </div>
+
+      <div class="rec-cards-grid" id="recCardsGrid">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Multi-Candidate Tactical Scatter Plot Workbench -->
+    <section class="scatter-section" id="scatterSection">
+      <div class="scatter-header-bar">
+        <div>
+          <h2 class="card-title">
+            <span>📍 Multi-Candidate Tactical Scatter Plot & Cluster Analysis</span>
+          </h2>
+          <div class="card-subtext" id="scatterSubtext">Visualizing drop-in candidate cluster across key position outputs</div>
+        </div>
+        <div class="scatter-mode-toggle">
+          <button class="scatter-mode-btn active" id="btnScatterRoleMetrics">⚡ Role Core Metrics</button>
+          <button class="scatter-mode-btn" id="btnScatterFinancial">💰 Financial Arbitrage vs Match</button>
+        </div>
+      </div>
+
+      <div class="scatter-container">
+        <canvas id="scatterCanvas" width="900" height="420"></canvas>
+        <div class="scatter-tooltip" id="scatterTooltip"></div>
+      </div>
+
+      <div class="scatter-legend">
+        <div><span class="scatter-legend-dot" style="background: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan);"></span> <strong id="scatterLegendStar">Departed Star</strong></div>
+        <div><span class="scatter-legend-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span> <strong>Top 3 Recommendations</strong></div>
+        <div><span class="scatter-legend-dot" style="background: var(--accent-purple); box-shadow: 0 0 8px var(--accent-purple);"></span> <strong>Other Shortlisted Candidates</strong></div>
+        <div><span class="scatter-legend-dot" style="background: #475569;"></span> <strong>Filtered Catalog Players</strong></div>
+      </div>
+    </section>
+
+    <!-- Head-to-Head Tactical Radar Workbench -->
+    <section class="radar-workbench">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-title">
+            <span>🕸️ Head-to-Head Tactical Radar Comparison</span>
+          </h2>
+          <div class="card-subtext" id="radarSubtext">Role-adaptive radar polygon calibrated across key position metrics & percentiles</div>
+        </div>
+      </div>
+
+      <!-- Face-off Photos Banner -->
+      <div class="faceoff-banner" id="faceoffBanner">
+        <div class="faceoff-player star-side">
+          <div class="faceoff-avatar-wrap">
+            <img id="faceoffStarImg" class="faceoff-photo" src="" alt="Star" style="display: none;" onerror="this.style.display='none'; document.getElementById('faceoffStarInitials').style.display='flex';" />
+            <div id="faceoffStarInitials" class="faceoff-initials">JB</div>
+          </div>
+          <div class="faceoff-info">
+            <div class="faceoff-tag">Departed Star Benchmark</div>
+            <div class="faceoff-name" id="faceoffStarName">Jude Bellingham</div>
+            <div class="faceoff-sub" id="faceoffStarClub">Borussia Dortmund</div>
+          </div>
+        </div>
+
+        <div class="faceoff-vs-badge">
+          <span class="vs-text">⚡ VS ⚡</span>
+          <span class="vs-match-index" id="faceoffMatchScore">94.8% Match</span>
+        </div>
+
+        <div class="faceoff-player cand-side">
+          <div class="faceoff-info" style="text-align: right;">
+            <div class="faceoff-tag" style="color: var(--accent-purple);">Target Drop-In Candidate</div>
+            <div class="faceoff-name" id="faceoffCandName">Selected Candidate</div>
+            <div class="faceoff-sub" id="faceoffCandClub">Scouted Club</div>
+          </div>
+          <div class="faceoff-avatar-wrap">
+            <img id="faceoffCandImg" class="faceoff-photo" src="" alt="Candidate" style="display: none;" onerror="this.style.display='none'; document.getElementById('faceoffCandInitials').style.display='flex';" />
+            <div id="faceoffCandInitials" class="faceoff-initials" style="background: linear-gradient(135deg, var(--accent-purple), #ec4899);">SC</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="radar-layout">
+        
+        <!-- Radar Canvas -->
+        <div class="radar-canvas-wrap">
+          <canvas id="radarCanvas" width="380" height="380"></canvas>
+          <div class="radar-legend">
+            <div class="legend-item">
+              <span class="legend-color-dot legend-star"></span>
+              <span id="legendStarName">Departed Star</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color-dot legend-cand"></span>
+              <span id="legendCandName">Selected Candidate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparative Metrics Table -->
+        <div class="comparison-table-wrap">
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Tactical Metric</th>
+                <th id="thStarName">Departed Star</th>
+                <th id="thCandName">Candidate</th>
+                <th>Tactical Delta</th>
+              </tr>
+            </thead>
+            <tbody id="compTableBody">
+              <!-- Rendered dynamically via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Methodological & Mathematical Dossier -->
+    <section class="dossier-card">
+      <h3 class="dossier-title">📐 Methodology & Algorithmic Architecture</h3>
+      <p>
+        Traditional football scouting relies on subjective scout reports or static FIFA ratings. The Tactical Void Engine operates on two novel mathematical layers:
+      </p>
+
+      <div class="dossier-grid">
+        <div class="dossier-item">
+          <h4>1. Tactical Void Quantification</h4>
+          <p>
+            Measures the difference in club points-per-game, goal creation, and defensive collapse across an empirical 25-game window pre- and post-departure.
+          </p>
+          <code class="dossier-code">Void Index = 50 - 22(ΔPPG) - 0.35(ΔWin%) - 15(ΔGF) + 12(ΔGA)</code>
+        </div>
+
+        <div class="dossier-item">
+          <h4>2. Cosine Vector Embeddings</h4>
+          <p>
+            Encodes player performance into normalized per-90 vectors covering goal creation, playmaking, minute durability, and physical profile.
+          </p>
+          <code class="dossier-code">CosSim(A, B) = (A · B) / (||A|| · ||B||)</code>
+        </div>
+
+        <div class="dossier-item">
+          <h4>3. Transfer Arbitrage Optimization</h4>
+          <p>
+            Calculates financial efficiency by identifying candidates who deliver 90%+ tactical compatibility while costing only a fraction of the liquidated fee.
+          </p>
+          <code class="dossier-code">Savings = Fee_Received - Candidate_Valuation</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dedicated Application Footer: RFF @ 26 -->
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <div class="footer-brand-col">
+          <div class="footer-logo">
+            <span class="footer-logo-icon">⚡</span>
+            <span class="footer-logo-text">The Tactical Void & Drop-In Replacement Engine</span>
+          </div>
+          <p class="footer-tagline">
+            Empirical Sporting Continuity, Vector Similarity & Arbitrage Scouting Platform
+          </p>
+        </div>
+
+        <div class="footer-signature-col">
+          <div class="footer-sig-badge">
+            <span class="sig-prefix">ENGINEERED BY</span>
+            <span class="sig-name">RFF @ 26</span>
+          </div>
+          <div class="footer-meta-info">
+            <span>Transfermarkt Pro Analytics</span>
+            <span>•</span>
+            <span>Season 2026/27 Edition</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

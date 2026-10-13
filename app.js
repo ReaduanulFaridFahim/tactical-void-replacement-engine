@@ -3212,16 +3212,16 @@ function setupScatterPlotListeners() {
       tooltip.style.display = 'none';
     });
 
-    canvas.addEventListener('click', (e) => {
+    const handleCanvasPointerSelect = (clientX, clientY) => {
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
-      const mouseX = (e.clientX - rect.left) * scaleX;
-      const mouseY = (e.clientY - rect.top) * scaleY;
+      const mouseX = (clientX - rect.left) * scaleX;
+      const mouseY = (clientY - rect.top) * scaleY;
 
       for (const pt of currentScatterPoints) {
         const dist = Math.hypot(pt.x - mouseX, pt.y - mouseY);
-        if (dist <= pt.r + 6 && !pt.isStar) {
+        if (dist <= pt.r + 8 && !pt.isStar) {
           if (currentEntityMode === 'coaches') {
             selectCoachCandidateForRadar(pt.data);
           } else {
@@ -3230,7 +3230,17 @@ function setupScatterPlotListeners() {
           break;
         }
       }
+    };
+
+    canvas.addEventListener('click', (e) => {
+      handleCanvasPointerSelect(e.clientX, e.clientY);
     });
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches.length > 0) {
+        handleCanvasPointerSelect(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
   }
 }
 

@@ -79,6 +79,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .engine-badge {
@@ -333,6 +334,15 @@ body {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 0.85rem;
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.category-tabs-track::-webkit-scrollbar {
+  display: none;
 }
 
 .cat-tab-btn {
@@ -348,6 +358,8 @@ body {
   transition: all 0.2s;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .cat-tab-btn:hover {
@@ -1151,12 +1163,27 @@ body {
 
 .comparison-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
+  max-width: 100%;
+}
+
+.comparison-table-wrap::-webkit-scrollbar {
+  height: 5px;
+}
+
+.comparison-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.3);
+  border-radius: 4px;
 }
 
 .comp-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.88rem;
+  min-width: 580px;
 }
 
 .comp-table th {
@@ -1738,6 +1765,7 @@ body {
   font-size: 0.8rem;
   color: var(--text-secondary);
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .scatter-legend-dot {
@@ -2159,6 +2187,444 @@ body {
   font-size: 0.72rem;
   color: var(--text-muted);
 }
+
+/* ==========================================================================
+   COMPREHENSIVE RESPONSIVE DESIGN SYSTEM
+   - 1200px: Desktops & Large Tablets Landscape
+   - 1024px: Tablets Landscape / Small Laptops
+   - 840px:  Tablets Portrait / Foldables
+   - 640px:  Phablets & Large Mobile Screens
+   - 480px:  Standard Mobile Phones (iPhone / Android)
+   - 360px:  Ultra-Compact Mobile Phones (iPhone SE / Galaxy Fold Cover)
+   ========================================================================== */
+
+/* --- 1200px Breakpoint (Compact Desktops / Laptops) --- */
+@media (max-width: 1200px) {
+  .app-layout {
+    max-width: 100%;
+    padding: 1.75rem 1.25rem 3.5rem;
+  }
+  .radar-layout {
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+  }
+}
+
+/* --- 1024px Breakpoint (Tablets Landscape) --- */
+@media (max-width: 1024px) {
+  .tactical-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .radar-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .radar-canvas-wrap {
+    margin: 0 auto;
+    max-width: 380px;
+    width: 100%;
+  }
+  .filter-bar {
+    gap: 1.5rem;
+    padding: 1.15rem 1.5rem;
+  }
+}
+
+/* --- 840px Breakpoint (Tablets Portrait) --- */
+@media (max-width: 840px) {
+  .player-search-wrap {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .section-label-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+  .category-tabs-track {
+    width: 100%;
+  }
+  .filter-bar {
+    justify-content: space-between;
+    padding: 1.15rem 1.25rem;
+    gap: 1.25rem;
+  }
+  .filter-group {
+    flex: 1 1 200px;
+    justify-content: space-between;
+  }
+  .dossier-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .step-hdr-sub {
+    margin-left: 0;
+    width: 100%;
+  }
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+  .footer-signature-col {
+    align-items: flex-start;
+  }
+}
+
+/* --- 640px Breakpoint (Phablets & Large Mobiles) --- */
+@media (max-width: 640px) {
+  .app-layout {
+    padding: 1.25rem 0.85rem 3rem;
+  }
+  .hero-header {
+    margin-bottom: 1.75rem;
+  }
+  .hero-title {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+  .hero-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+  .mode-switcher-container {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    border-radius: var(--radius-md);
+    gap: 0.35rem;
+    padding: 0.35rem;
+    margin: 0.85rem 0 1.25rem 0;
+  }
+  .mode-tab-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.85rem;
+  }
+  .horizon-toggle-bar {
+    display: flex;
+    width: 100%;
+    gap: 0.35rem;
+  }
+  .horizon-btn {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+    padding: 0.55rem 0.4rem;
+    font-size: 0.78rem;
+    white-space: normal;
+  }
+  .glass-card,
+  .framework-stepper-card,
+  .scatter-section,
+  .radar-workbench,
+  .dossier-card {
+    padding: 1.25rem 1rem;
+    border-radius: var(--radius-md);
+  }
+  .tactical-grid {
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+  }
+  .void-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .star-metric-pills {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  .star-dossier-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .steps-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .framework-stepper-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.75rem;
+  }
+  .filter-group {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .slider-wrap {
+    flex: 1;
+    max-width: 180px;
+    justify-content: flex-end;
+  }
+  .range-slider {
+    width: 100%;
+    max-width: 120px;
+  }
+  .custom-scout-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .custom-scout-btn {
+    width: 100%;
+    padding: 0.75rem;
+    text-align: center;
+  }
+  .rec-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .candidate-card {
+    padding: 1.15rem 1rem;
+  }
+  .scatter-section {
+    margin-top: 1.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .scatter-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .scatter-mode-toggle {
+    width: 100%;
+  }
+  .scatter-mode-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.45rem 0.5rem;
+  }
+  .scatter-container {
+    height: 340px;
+  }
+  .scatter-legend {
+    font-size: 0.74rem;
+    gap: 0.5rem 1rem;
+    justify-content: flex-start;
+  }
+  .faceoff-banner {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+    padding: 1.25rem 1rem;
+  }
+  .faceoff-player {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .faceoff-player.cand-side {
+    flex-direction: column-reverse;
+  }
+  .faceoff-info {
+    text-align: center !important;
+  }
+  .faceoff-vs-badge {
+    margin: 0.25rem 0;
+  }
+  .radar-workbench {
+    margin-bottom: 2rem;
+  }
+  .radar-canvas-wrap {
+    max-width: 100%;
+  }
+  #radarCanvas {
+    max-width: 300px;
+  }
+  .comp-table {
+    min-width: 580px;
+  }
+  .app-footer {
+    margin-top: 2.5rem;
+    padding: 2rem 0 1.5rem;
+  }
+}
+
+/* --- 480px Breakpoint (Standard Mobile Phones) --- */
+@media (max-width: 480px) {
+  .app-layout {
+    padding: 1rem 0.65rem 2.5rem;
+  }
+  .hero-badge-wrap {
+    gap: 0.4rem;
+  }
+  .engine-badge {
+    font-size: 0.68rem;
+    padding: 0.25rem 0.6rem;
+  }
+  .hero-title {
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  .hero-subtitle {
+    font-size: 0.82rem;
+  }
+  .mode-tab-btn {
+    font-size: 0.8rem;
+    padding: 0.55rem 0.75rem;
+  }
+  .mode-tab-pill {
+    font-size: 0.68rem;
+    padding: 0.12rem 0.4rem;
+  }
+  .search-input {
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem 0.75rem 2.4rem;
+  }
+  .search-icon {
+    left: 0.8rem;
+  }
+  .card-header-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+  .meter-value-large {
+    font-size: 1.15rem;
+  }
+  .star-profile-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .star-avatar-wrapper {
+    width: 56px;
+    height: 56px;
+  }
+  .star-photo-avatar, .star-avatar-big {
+    width: 56px;
+    height: 56px;
+  }
+  .star-text-title {
+    font-size: 1.2rem;
+  }
+  .star-text-meta {
+    font-size: 0.8rem;
+  }
+  .pill-stat {
+    padding: 0.65rem 0.5rem;
+  }
+  .pill-stat-val {
+    font-size: 1.2rem;
+  }
+  .pill-stat-lbl {
+    font-size: 0.68rem;
+  }
+  .step-card {
+    padding: 0.9rem;
+  }
+  .step-name {
+    font-size: 0.92rem;
+  }
+  .step-desc {
+    font-size: 0.78rem;
+  }
+  .filter-label {
+    font-size: 0.75rem;
+  }
+  .slider-wrap {
+    max-width: 155px;
+  }
+  .range-slider {
+    max-width: 100px;
+  }
+  .cand-top-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .cand-stats-grid {
+    gap: 0.35rem;
+  }
+  .cand-stat-box {
+    padding: 0.45rem 0.3rem;
+  }
+  .cand-stat-val {
+    font-size: 0.88rem;
+  }
+  .cand-stat-lbl {
+    font-size: 0.65rem;
+  }
+  .scatter-container {
+    height: 290px;
+  }
+  #scatterCanvas {
+    cursor: default;
+  }
+  #radarCanvas {
+    max-width: 260px;
+  }
+  .radar-legend {
+    gap: 0.85rem;
+    font-size: 0.78rem;
+  }
+  .footer-logo-text {
+    font-size: 0.95rem;
+  }
+  .footer-tagline {
+    font-size: 0.75rem;
+  }
+  .footer-sig-badge {
+    padding: 0.35rem 0.8rem;
+  }
+  .sig-name {
+    font-size: 0.88rem;
+  }
+  .footer-meta-info {
+    font-size: 0.68rem;
+    flex-wrap: wrap;
+  }
+}
+
+/* --- 360px Breakpoint (Ultra-Compact Mobile Phones) --- */
+@media (max-width: 360px) {
+  .app-layout {
+    padding: 0.85rem 0.5rem 2rem;
+  }
+  .hero-title {
+    font-size: 1.35rem;
+  }
+  .mode-tab-text {
+    font-size: 0.78rem;
+  }
+  .horizon-btn {
+    font-size: 0.7rem;
+    padding: 0.45rem 0.25rem;
+  }
+  .pill-stat-val {
+    font-size: 1.05rem;
+  }
+  .slider-wrap {
+    max-width: 130px;
+  }
+  .range-slider {
+    max-width: 80px;
+  }
+  .slider-val-tag {
+    font-size: 0.72rem;
+    min-width: 38px;
+  }
+  #radarCanvas {
+    max-width: 230px;
+  }
+}
+
 
 
 

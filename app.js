@@ -18,6 +18,13 @@ let activeBenchmarkPlayer = null; // When an arbitrary player from catalog is se
 let customPinnedCandidates = [];
 let currentPitchFormation = '4-3-3';
 let sandboxSelectedEntity = null;
+let multiComparisonCandidates = [];
+let multiComparisonCoachCandidates = [];
+const MULTI_CANDIDATE_COLORS = [
+  { fill: 'rgba(168, 85, 247, 0.28)', stroke: '#a855f7', name: 'Slot 1 (Primary)', hex: '#a855f7', textClass: 'cand-col-1', dotClass: 'legend-cand-1' },
+  { fill: 'rgba(16, 185, 129, 0.28)', stroke: '#10b981', name: 'Slot 2 (Alt A)', hex: '#10b981', textClass: 'cand-col-2', dotClass: 'legend-cand-2' },
+  { fill: 'rgba(245, 158, 11, 0.28)', stroke: '#f59e0b', name: 'Slot 3 (Alt B)', hex: '#f59e0b', textClass: 'cand-col-3', dotClass: 'legend-cand-3' }
+];
 
 // Head Coach / Manager State
 let currentCoachDepartureIndex = 0;
@@ -353,6 +360,20 @@ function setupEventListeners() {
       document.getElementById('scoreSliderVal').textContent = `${filterMinScore}%`;
       if (currentEntityMode === 'coaches') renderCoachRecommendations();
       else renderRecommendations();
+    });
+  }
+
+  // 3-Way Multi-Radar Toolbar Action Buttons
+  const btnAutoTop3 = document.getElementById('btnAutoTop3');
+  const btnResetSingle = document.getElementById('btnResetSingle');
+  if (btnAutoTop3) {
+    btnAutoTop3.addEventListener('click', () => {
+      setTop3MultiCompare();
+    });
+  }
+  if (btnResetSingle) {
+    btnResetSingle.addEventListener('click', () => {
+      resetToSingleCompare();
     });
   }
 
@@ -1543,13 +1564,17 @@ function renderRecommendations() {
     countBadge.textContent = `${filtered.length} Candidates Qualified`;
   }
 
-  if (filtered.length > 0 && !currentCandidate) {
-    currentCandidate = filtered[0];
-  } else if (filtered.length > 0 && currentCandidate) {
-    const exists = filtered.find(c => c.player_id === currentCandidate.player_id);
-    if (!exists) currentCandidate = filtered[0];
+  if (filtered.length > 0) {
+    if (!currentCandidate || !filtered.some(c => c.player_id === currentCandidate.player_id)) {
+      currentCandidate = filtered[0];
+    }
+    // Maintain or initialize 3-way multi-comparison cohort with top 3
+    if (multiComparisonCandidates.length === 0 || !multiComparisonCandidates.some(mc => filtered.some(fc => fc.player_id === mc.player_id))) {
+      multiComparisonCandidates = filtered.slice(0, 3);
+    }
   } else {
     currentCandidate = null;
+    multiComparisonCandidates = [];
   }
 
   if (filtered.length === 0) {
@@ -1661,9 +1686,14 @@ function renderRecommendations() {
         </div>
       </div>
 
-      <button class="card-action-btn" id="btn-select-${cand.player_id}">
-        <span>${isSelected ? '✓ Viewing in Radar' : 'Compare in Radar'}</span> ➔
-      </button>
+      <div class="card-action-row">
+        <button class="card-action-btn" id="btn-select-${cand.player_id}">
+          <span>${isSelected ? '✓ Primary Drop-In Focus' : 'Set as Primary Focus'}</span> ➔
+        </button>
+        <button class="btn-multi-toggle ${multiComparisonCandidates.some(c => c.player_id === cand.player_id) ? 'in-slot-' + (multiComparisonCandidates.findIndex(c => c.player_id === cand.player_id) + 1) : ''}" id="btn-multi-toggle-${cand.player_id}" title="Toggle inclusion in 3-way multi-radar faceoff">
+          ${multiComparisonCandidates.some(c => c.player_id === cand.player_id) ? `✓ In 3-Way Radar (Slot ${multiComparisonCandidates.findIndex(c => c.player_id === cand.player_id) + 1})` : `+ Add to 3-Way Radar`}
+        </button>
+      </div>
     `;
 
     card.addEventListener('click', (e) => {
@@ -1671,9 +1701,19 @@ function renderRecommendations() {
       selectCandidateForRadar(cand);
     });
 
+    const multiBtn = card.querySelector(`#btn-multi-toggle-${cand.player_id}`);
+    if (multiBtn) {
+      multiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleCandidateInMultiCompare(cand);
+      });
+    }
+
     grid.appendChild(card);
   });
 
+  updateMultiSlotsToolbar();
+  updateCardMultiCompareBadges();
   drawRadarChart();
   renderComparisonTable();
   drawScatterPlot(filtered, activeStar);
@@ -1930,6 +1970,9 @@ function renderCoachRecommendations() {
   if (!currentCoachCandidate || !filtered.some(c => c.name === currentCoachCandidate.name)) {
     currentCoachCandidate = filtered[0] || null;
   }
+  if (multiComparisonCoachCandidates.length === 0 || !multiComparisonCoachCandidates.some(mc => filtered.some(fc => fc.name === mc.name))) {
+    multiComparisonCoachCandidates = filtered.slice(0, 3);
+  }
 
   filtered.forEach((cand, idx) => {
     const isSelected = currentCoachCandidate && currentCoachCandidate.name === cand.name;
@@ -2013,9 +2056,14 @@ function renderCoachRecommendations() {
         </div>
       </div>
 
-      <button class="card-action-btn" id="btn-select-coach-${idx}">
-        <span>${isSelected ? '✓ Viewing in Radar' : 'Compare in Radar'}</span> ➔
-      </button>
+      <div class="card-action-row">
+        <button class="card-action-btn" id="btn-select-coach-${idx}">
+          <span>${isSelected ? '✓ Primary Manager Focus' : 'Set as Primary Focus'}</span> ➔
+        </button>
+        <button class="btn-multi-toggle ${multiComparisonCoachCandidates.some(c => c.name === cand.name) ? 'in-slot-' + (multiComparisonCoachCandidates.findIndex(c => c.name === cand.name) + 1) : ''}" id="btn-multi-coach-${idx}" title="Toggle inclusion in 3-way multi-radar faceoff">
+          ${multiComparisonCoachCandidates.some(c => c.name === cand.name) ? `✓ In 3-Way Radar (Slot ${multiComparisonCoachCandidates.findIndex(c => c.name === cand.name) + 1})` : `+ Add to 3-Way Radar`}
+        </button>
+      </div>
     `;
 
     card.addEventListener('click', (e) => {
@@ -2023,9 +2071,19 @@ function renderCoachRecommendations() {
       selectCoachCandidateForRadar(cand);
     });
 
+    const multiCoachBtn = card.querySelector(`#btn-multi-coach-${idx}`);
+    if (multiCoachBtn) {
+      multiCoachBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleCandidateInMultiCompare(cand);
+      });
+    }
+
     grid.appendChild(card);
   });
 
+  updateMultiSlotsToolbar();
+  updateCardMultiCompareBadges();
   drawRadarChart();
   renderCoachComparisonTable();
   drawScatterPlot(filtered, activeStar);
@@ -2036,21 +2094,10 @@ function renderCoachRecommendations() {
 
 function selectCoachCandidateForRadar(cand) {
   currentCoachCandidate = cand;
-  document.querySelectorAll('.candidate-card').forEach(c => {
-    c.classList.remove('active-compare');
-    const btnSpan = c.querySelector('.card-action-btn span');
-    if (btnSpan) btnSpan.textContent = 'Compare in Radar';
-  });
-
-  const cards = document.querySelectorAll('.candidate-card');
-  cards.forEach(c => {
-    const nameEl = c.querySelector('.cand-name');
-    if (nameEl && nameEl.textContent === cand.name) {
-      c.classList.add('active-compare');
-      const btnSpan = c.querySelector('.card-action-btn span');
-      if (btnSpan) btnSpan.textContent = '✓ Viewing in Radar';
-    }
-  });
+  // Promote to Slot 1 in coach multi-comparison list
+  multiComparisonCoachCandidates = [cand, ...multiComparisonCoachCandidates.filter(c => c.name !== cand.name)].slice(0, 3);
+  updateMultiSlotsToolbar();
+  updateCardMultiCompareBadges();
 
   drawRadarChart();
   renderCoachComparisonTable();
@@ -2074,17 +2121,10 @@ function renderCoachComparisonTable() {
   const cand = currentCoachCandidate;
   if (!activeStar) return;
 
-  const thStar = document.getElementById('thStarName');
-  const thCand = document.getElementById('thCandName');
-  const legStar = document.getElementById('legendStarName');
-  const legCand = document.getElementById('legendCandName');
+  const activeCoachList = (multiComparisonCoachCandidates && multiComparisonCoachCandidates.length) ?
+    multiComparisonCoachCandidates.slice(0, 3) : (cand ? [cand] : []);
 
-  if (thStar) thStar.textContent = activeStar.name;
-  if (thCand) thCand.textContent = cand ? cand.name : 'Candidate';
-  if (legStar) legStar.textContent = activeStar.name;
-  if (legCand) legCand.textContent = cand ? cand.name : 'Candidate';
-
-  // Faceoff Banner
+  // Update Faceoff Star Side
   const faceoffStarImg = document.getElementById('faceoffStarImg');
   const faceoffStarInitials = document.getElementById('faceoffStarInitials');
   const faceoffStarName = document.getElementById('faceoffStarName');
@@ -2104,43 +2144,85 @@ function renderCoachComparisonTable() {
     }
   }
 
-  const faceoffCandImg = document.getElementById('faceoffCandImg');
-  const faceoffCandInitials = document.getElementById('faceoffCandInitials');
-  const faceoffCandName = document.getElementById('faceoffCandName');
-  const faceoffCandClub = document.getElementById('faceoffCandClub');
+  // Update Faceoff Candidates Side
+  const faceoffCandidatesContainer = document.getElementById('faceoffCandidatesContainer');
   const faceoffMatchScore = document.getElementById('faceoffMatchScore');
 
-  if (cand) {
-    if (faceoffCandName) faceoffCandName.textContent = cand.name;
-    if (faceoffCandClub) faceoffCandClub.textContent = `${cand.current_club || cand.club} • ${cand.top_formation}`;
-    if (faceoffMatchScore) faceoffMatchScore.textContent = `${cand.composite_match_score}% Match`;
-    if (faceoffCandImg && faceoffCandInitials) {
-      if (cand.image_url) {
-        faceoffCandImg.src = cand.image_url;
-        faceoffCandImg.style.display = 'block';
-        faceoffCandInitials.style.display = 'none';
-      } else {
-        faceoffCandImg.style.display = 'none';
-        faceoffCandInitials.style.display = 'flex';
-        faceoffCandInitials.textContent = getInitials(cand.name);
-      }
+  if (faceoffMatchScore) {
+    faceoffMatchScore.textContent = cand ? `${cand.composite_match_score}% Match` : '--%';
+  }
+
+  if (faceoffCandidatesContainer) {
+    if (activeCoachList.length > 1) {
+      let cardsHtml = '<div class="faceoff-candidates-grid">';
+      activeCoachList.forEach((c, idx) => {
+        const isPrim = (idx === 0);
+        cardsHtml += `
+          <div class="faceoff-cand-mini-card ${isPrim ? 'is-primary' : ''} cand-slot-${idx + 1}" data-coach-name="${c.name}" title="Click to set as Primary Focus">
+            <div class="mini-slot-badge">Slot ${idx + 1}${isPrim ? ' • Primary' : ''}</div>
+            <div class="mini-avatar-wrap">
+              ${c.image_url ? `<img src="${c.image_url}" class="mini-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />` : ''}
+              <div class="mini-avatar-initials" style="${c.image_url ? 'display: none;' : ''}">${getInitials(c.name)}</div>
+            </div>
+            <div class="mini-cand-name">${c.name}</div>
+            <div class="mini-cand-meta">${c.current_club || c.club} • Age ${c.age}</div>
+            <div class="mini-cand-match">${c.composite_match_score}% Match</div>
+          </div>
+        `;
+      });
+      cardsHtml += '</div>';
+      faceoffCandidatesContainer.innerHTML = cardsHtml;
+
+      faceoffCandidatesContainer.querySelectorAll('.faceoff-cand-mini-card').forEach(mc => {
+        mc.addEventListener('click', () => {
+          const cname = mc.getAttribute('data-coach-name');
+          const found = activeCoachList.find(c => c.name === cname);
+          if (found) selectCoachCandidateForRadar(found);
+        });
+      });
+    } else {
+      faceoffCandidatesContainer.innerHTML = `
+        <div class="faceoff-player cand-side">
+          <div class="faceoff-info" style="text-align: right;">
+            <div class="faceoff-tag" style="color: var(--accent-purple);">Target Drop-In Candidate</div>
+            <div class="faceoff-name" id="faceoffCandName">${cand ? cand.name : 'Selected Candidate'}</div>
+            <div class="faceoff-sub" id="faceoffCandClub">${cand ? `${cand.current_club || cand.club} • ${cand.top_formation}` : 'Scouted Club'}</div>
+          </div>
+          <div class="faceoff-avatar-wrap">
+            <img id="faceoffCandImg" class="faceoff-photo" src="${cand && cand.image_url ? cand.image_url : ''}" alt="Candidate" style="${cand && cand.image_url ? 'display: block;' : 'display: none;'}" onerror="this.style.display='none'; document.getElementById('faceoffCandInitials').style.display='flex';" />
+            <div id="faceoffCandInitials" class="faceoff-initials" style="${cand && cand.image_url ? 'display: none;' : 'display: flex;'}; background: linear-gradient(135deg, var(--accent-purple), #ec4899);">${cand ? getInitials(cand.name) : 'SC'}</div>
+          </div>
+        </div>
+      `;
     }
-  } else {
-    if (faceoffCandName) faceoffCandName.textContent = 'None Selected';
-    if (faceoffCandClub) faceoffCandClub.textContent = 'Awaiting Filter Selection';
-    if (faceoffMatchScore) faceoffMatchScore.textContent = '--%';
-    if (faceoffCandImg) faceoffCandImg.style.display = 'none';
-    if (faceoffCandInitials) {
-      faceoffCandInitials.style.display = 'flex';
-      faceoffCandInitials.textContent = '??';
-    }
+  }
+
+  // Populate dynamic Table Headers
+  const thead = document.getElementById('compTableHead');
+  if (thead) {
+    let thHtml = `<tr>
+      <th style="min-width: 220px;">Managerial Dimension</th>
+      <th class="star-col" id="thStarName" style="min-width: 150px;">${activeStar.name} <div class="th-sub">Departed Benchmark</div></th>`;
+
+    activeCoachList.forEach((c, idx) => {
+      const colClass = `cand-col-${idx + 1}`;
+      thHtml += `
+        <th class="cand-col ${colClass}" ${idx === 0 ? 'id="thCandName"' : ''} style="min-width: 150px;">
+          <span class="slot-badge">Slot ${idx + 1}${idx === 0 ? ' • Primary' : ''}</span>
+          <span class="th-name">${c.name}</span>
+          <div class="th-sub">${c.composite_match_score}% Match</div>
+        </th>
+      `;
+    });
+    thHtml += `<th class="summary-col" style="min-width: 140px;">Tactical Edge & Verdict</th></tr>`;
+    thead.innerHTML = thHtml;
   }
 
   const tbody = document.getElementById('compTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  if (!cand) {
+  if (activeCoachList.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
@@ -2151,11 +2233,34 @@ function renderCoachComparisonTable() {
     return;
   }
 
+  const colSpanCount = activeCoachList.length + 2;
+
+  function renderCoachRow(metricLabel, starHtml, candValFn, summaryFn, bestIdxFn = null) {
+    const tr = document.createElement('tr');
+    let rowHtml = `<td><strong>${metricLabel}</strong></td><td class="star-col">${starHtml}</td>`;
+    
+    let bestIdx = -1;
+    if (bestIdxFn && activeCoachList.length > 1) {
+      bestIdx = bestIdxFn(activeCoachList);
+    }
+
+    activeCoachList.forEach((c, idx) => {
+      const isBest = (bestIdx === idx);
+      const val = candValFn(c, idx);
+      rowHtml += `<td class="cand-col cand-col-${idx + 1} ${isBest ? 'best-metric-highlight' : ''}">${val}</td>`;
+    });
+
+    const summary = summaryFn ? summaryFn(activeCoachList[0], activeStar) : '<span class="delta-neutral">Complementary</span>';
+    rowHtml += `<td>${summary}</td>`;
+    tr.innerHTML = rowHtml;
+    tbody.appendChild(tr);
+  }
+
   // STEP 1: PHILOSOPHY & IDENTITY
   const step1Hdr = document.createElement('tr');
   step1Hdr.className = 'comp-step-row comp-step-1-hdr';
   step1Hdr.innerHTML = `
-    <td colspan="4">
+    <td colspan="${colSpanCount}">
       <div class="step-header-cell">
         <span class="step-hdr-badge badge-step-1">STEP 01</span>
         <span class="step-hdr-title">IDENTIFY THE DEPARTING MANAGER'S PHILOSOPHY & SYSTEM</span>
@@ -2165,290 +2270,495 @@ function renderCoachComparisonTable() {
   `;
   tbody.appendChild(step1Hdr);
 
-  const formFitClass = cand.top_formation === activeStar.top_formation ? 'delta-positive' : 'delta-neutral';
-  const step1Rows = [
-    {
-      metric: '📐 Primary Formation & Structure',
-      starVal: `<strong>${activeStar.top_formation}</strong>`,
-      candVal: `<strong>${cand.top_formation}</strong>`,
-      delta: `<span class="${formFitClass}">${cand.top_formation === activeStar.top_formation ? '✓ Identical Shape' : 'Compatible Shape'}</span>`
-    },
-    {
-      metric: '🧠 Tactical Philosophy & Blueprint',
-      starVal: activeStar.tactical_archetype,
-      candVal: cand.tactical_archetype,
-      delta: cand.tactical_archetype === activeStar.tactical_archetype ? '<span class="delta-positive">✓ Identical Philosophy</span>' : '<span class="delta-neutral">System Aligned</span>'
-    },
-    {
-      metric: '⚡ Pressing Intensity & Defensive Block',
-      starVal: 'High-Press Rest-Defense / Gegenpressing',
-      candVal: cand.tactical_archetype.includes('Press') ? 'High-Intensity Press / Counter-Press' : 'Mid-Block Compact Organization',
-      delta: '<span class="delta-positive">Press Trap Capable</span>'
-    },
-    {
-      metric: '🔄 Tactical System Fluidity',
-      starVal: `${activeStar.secondary_formation} Secondary Option`,
-      candVal: `${cand.secondary_formation} Secondary Option`,
-      delta: '<span class="delta-neutral">System Adaptable</span>'
-    },
-    {
-      metric: '🌱 Squad Rotation & Youth Pathway',
-      starVal: 'Balanced Senior Squad & Academy Flow',
-      candVal: cand.age < 50 ? 'High Youth Integration & Development' : 'Proven Senior Title Management',
-      delta: '<span class="delta-positive">Development Asset</span>'
+  renderCoachRow(
+    '📐 Primary Formation & Structure',
+    `<strong>${activeStar.top_formation}</strong>`,
+    c => `<strong>${c.top_formation}</strong>`,
+    c => c.top_formation === activeStar.top_formation ? '<span class="delta-positive">✓ Identical Tactical Base</span>' : '<span class="delta-neutral">Adaptable Shape</span>'
+  );
+
+  renderCoachRow(
+    '🧠 Tactical Archetype & Identity',
+    `<span class="archetype-tag tag-star">${activeStar.tactical_archetype || 'Tactician'}</span>`,
+    c => `<span class="archetype-tag tag-cand">${c.tactical_archetype || 'Tactician'}</span>`,
+    c => c.tactical_archetype === activeStar.tactical_archetype ? '<span class="delta-positive">✓ Direct System Fit</span>' : '<span class="delta-neutral">Tactical Evolution</span>'
+  );
+
+  renderCoachRow(
+    '⚡ Pressing Intensity & PPDA %ile',
+    `${activeStar.pressing_ppda_percentile || 82}th Percentile`,
+    c => `${c.pressing_ppda_percentile || 80}th Percentile`,
+    c => (c.pressing_ppda_percentile || 80) >= (activeStar.pressing_ppda_percentile || 82) ? '<span class="delta-positive">High-Press Maintenance</span>' : '<span class="delta-neutral">Mid-Block Control</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { if ((c.pressing_ppda_percentile || 0) > maxVal) { maxVal = c.pressing_ppda_percentile || 0; best = i; } });
+      return best;
     }
-  ];
+  );
 
-  step1Rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.metric}</strong></td>
-      <td class="star-col">${r.starVal}</td>
-      <td class="cand-col">${r.candVal}</td>
-      <td style="font-family: var(--font-mono); font-size: 0.82rem;">${r.delta}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+  renderCoachRow(
+    '🔄 Formation Flexibility Rating',
+    `${activeStar.flexibility_rating || 85}/99 (${activeStar.formations_used_count || 3} Shapes)`,
+    c => `${c.flexibility_rating || 82}/99 (${c.formations_used_count || 2} Shapes)`,
+    c => (c.flexibility_rating || 82) >= 80 ? '<span class="delta-positive">Multi-Shape Fluidity</span>' : '<span class="delta-neutral">Rigid Structure</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { if ((c.flexibility_rating || 0) > maxVal) { maxVal = c.flexibility_rating || 0; best = i; } });
+      return best;
+    }
+  );
 
-  // STEP 2: CAREER PERFORMANCE & TRACK RECORD
+  // STEP 2: PERFORMANCE & OUTPUT
   const step2Hdr = document.createElement('tr');
   step2Hdr.className = 'comp-step-row comp-step-2-hdr';
   step2Hdr.innerHTML = `
-    <td colspan="4">
+    <td colspan="${colSpanCount}">
       <div class="step-header-cell">
         <span class="step-hdr-badge badge-step-2">STEP 02</span>
-        <span class="step-hdr-title">COLLECT MANAGERIAL PERFORMANCE & TRACK RECORD</span>
-        <span class="step-hdr-sub">Career matches managed, win rate, total points, trophy count & durability</span>
+        <span class="step-hdr-title">CALCULATE STATISTICAL REPLICATION & EFFICIENCY</span>
+        <span class="step-hdr-sub">Points per match, win percentage, goal production and defensive restraint</span>
       </div>
     </td>
   `;
   tbody.appendChild(step2Hdr);
 
-  const starGames = activeStar.total_games;
-  const candGames = cand.total_games;
-  const gamesDelta = candGames - starGames;
-
-  const starWinPct = activeStar.win_pct;
-  const candWinPct = cand.win_pct;
-  const winPctDelta = candWinPct - starWinPct;
-
-  const starPpg = activeStar.ppg;
-  const candPpg = cand.ppg;
-  const ppgDelta = candPpg - starPpg;
-
-  const starTrophies = activeStar.trophies || 0;
-  const candTrophies = cand.trophies || 0;
-  const trophyDelta = candTrophies - starTrophies;
-
-  const step2Rows = [
-    {
-      metric: '🏟️ Career Matches Managed',
-      starVal: `${starGames} Matches`,
-      candVal: `${candGames} Matches`,
-      delta: gamesDelta >= 0 ? `<span class="delta-positive">+${gamesDelta} Matches</span>` : `<span class="delta-neutral">${gamesDelta} Matches</span>`
+  renderCoachRow(
+    '📊 Career Points Per Game (PPG)',
+    `<strong>${activeStar.ppg.toFixed(2)}</strong>`,
+    c => `<strong>${c.ppg.toFixed(2)}</strong>`,
+    c => {
+      const diff = c.ppg - activeStar.ppg;
+      return diff >= 0 ? `<span class="delta-positive">+${diff.toFixed(2)} PPG Edge</span>` : `<span class="delta-negative">${diff.toFixed(2)} PPG Delta</span>`;
     },
-    {
-      metric: '📊 Win / Draw / Loss Record',
-      starVal: `${activeStar.wins}W / ${activeStar.draws}D / ${activeStar.losses}L`,
-      candVal: `${cand.wins}W / ${cand.draws}D / ${cand.losses}L`,
-      delta: `<span class="delta-neutral">${cand.win_pct.toFixed(1)}% vs ${activeStar.win_pct.toFixed(1)}%</span>`
-    },
-    {
-      metric: '🏆 Major Titles & Trophies Won',
-      starVal: `<strong>${starTrophies} Major Honors</strong>`,
-      candVal: `<strong>${candTrophies} Major Honors</strong>`,
-      delta: trophyDelta >= 0 ? `<span class="delta-positive">+${trophyDelta} Silverware</span>` : `<span class="delta-neutral">${trophyDelta} Delta</span>`
-    },
-    {
-      metric: '📈 Points Per Game (PPG)',
-      starVal: `${starPpg.toFixed(2)} PPG`,
-      candVal: `${candPpg.toFixed(2)} PPG`,
-      delta: ppgDelta >= 0 ? `<span class="delta-positive">+${ppgDelta.toFixed(2)} PPG</span>` : `<span class="delta-negative">${ppgDelta.toFixed(2)} PPG</span>`
-    },
-    {
-      metric: '🎯 Career Win Percentage (%)',
-      starVal: `${starWinPct.toFixed(1)}%`,
-      candVal: `${candWinPct.toFixed(1)}%`,
-      delta: winPctDelta >= 0 ? `<span class="delta-positive">+${winPctDelta.toFixed(1)}%</span>` : `<span class="delta-negative">${winPctDelta.toFixed(1)}%</span>`
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { if (c.ppg > maxVal) { maxVal = c.ppg; best = i; } });
+      return best;
     }
-  ];
+  );
 
-  step2Rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.metric}</strong></td>
-      <td class="star-col">${r.starVal}</td>
-      <td class="cand-col">${r.candVal}</td>
-      <td style="font-family: var(--font-mono); font-size: 0.82rem;">${r.delta}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+  renderCoachRow(
+    '🏆 Win Percentage',
+    `${activeStar.win_pct.toFixed(1)}%`,
+    c => `${c.win_pct.toFixed(1)}%`,
+    c => {
+      const diff = c.win_pct - activeStar.win_pct;
+      return diff >= 0 ? `<span class="delta-positive">+${diff.toFixed(1)}% Win Efficiency</span>` : `<span class="delta-neutral">${diff.toFixed(1)}% Win Rate</span>`;
+    },
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { if (c.win_pct > maxVal) { maxVal = c.win_pct; best = i; } });
+      return best;
+    }
+  );
 
-  // STEP 3: COMPARE LIKE-FOR-LIKE EFFICIENCY & EMPIRICAL PERCENTILES
+  renderCoachRow(
+    '⚽ Goals Scored / Match (GF/G)',
+    `${activeStar.gf_pg.toFixed(2)}`,
+    c => `${c.gf_pg.toFixed(2)}`,
+    c => {
+      const diff = c.gf_pg - activeStar.gf_pg;
+      return diff >= 0 ? `<span class="delta-positive">+${diff.toFixed(2)} GF/G Attack</span>` : `<span class="delta-neutral">${diff.toFixed(2)} GF/G</span>`;
+    },
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { if (c.gf_pg > maxVal) { maxVal = c.gf_pg; best = i; } });
+      return best;
+    }
+  );
+
+  renderCoachRow(
+    '🛡️ Goals Conceded / Match (GA/G)',
+    `${activeStar.ga_pg.toFixed(2)}`,
+    c => `${c.ga_pg.toFixed(2)}`,
+    c => {
+      const diff = activeStar.ga_pg - c.ga_pg;
+      return diff > 0 ? `<span class="delta-positive">-${diff.toFixed(2)} GA/G Tighter Defense</span>` : `<span class="delta-neutral">+${Math.abs(diff).toFixed(2)} GA/G Conceded</span>`;
+    },
+    list => {
+      let minVal = 999, best = 0;
+      list.forEach((c, i) => { if (c.ga_pg < minVal) { minVal = c.ga_pg; best = i; } });
+      return best;
+    }
+  );
+
+  // STEP 3: EXPERIENCE & SILVERWARE
   const step3Hdr = document.createElement('tr');
   step3Hdr.className = 'comp-step-row comp-step-3-hdr';
   step3Hdr.innerHTML = `
-    <td colspan="4">
+    <td colspan="${colSpanCount}">
       <div class="step-header-cell">
         <span class="step-hdr-badge badge-step-3">STEP 03</span>
-        <span class="step-hdr-title">COMPARE LIKE-FOR-LIKE EFFICIENCY & EMPIRICAL PERCENTILES</span>
-        <span class="step-hdr-sub">Per-match efficiency rates & 0-99th percentile rankings across 1,200+ qualified European managers</span>
+        <span class="step-hdr-title">EVALUATE PEDIGREE, HONORS & TENURE STABILITY</span>
+        <span class="step-hdr-sub">Matches managed, major honors won, tenure durability and managerial age</span>
       </div>
     </td>
   `;
   tbody.appendChild(step3Hdr);
 
-  const starPcts = activeStar.radar_percentiles || {};
-  const candPcts = cand.radar_percentiles || {};
+  renderCoachRow(
+    '📅 Manager Age & Energy Profile',
+    `${activeStar.age} yrs old`,
+    c => `${c.age} yrs old`,
+    c => {
+      const diff = activeStar.age - c.age;
+      return diff > 0 ? `<span class="delta-positive">+${diff} yrs Younger Longevity</span>` : `<span class="delta-neutral">${Math.abs(diff)} yrs older</span>`;
+    },
+    list => {
+      let minVal = 999, best = 0;
+      list.forEach((c, i) => { if (c.age < minVal) { minVal = c.age; best = i; } });
+      return best;
+    }
+  );
 
-  const step3Metrics = [
-    { key: 'ppg_win_efficiency', label: 'Points Per Game (PPG)', starRaw: `${activeStar.ppg.toFixed(2)} PPG`, candRaw: `${cand.ppg.toFixed(2)} PPG` },
-    { key: 'attacking_output', label: 'Goals Scored / Match (GF/G)', starRaw: `${activeStar.gf_pg.toFixed(2)} GF/G`, candRaw: `${cand.gf_pg.toFixed(2)} GF/G` },
-    { key: 'defensive_solidity', label: 'Defensive Control & Low GA/G', starRaw: `${activeStar.ga_pg.toFixed(2)} GA/G (${activeStar.cs_pct.toFixed(1)}% CS)`, candRaw: `${cand.ga_pg.toFixed(2)} GA/G (${cand.cs_pct.toFixed(1)}% CS)` },
-    { key: 'formation_flexibility', label: 'Formation Adaptability Score', starRaw: 'High Shape Fluidity', candRaw: 'System Consistent' },
-    { key: 'pressing_intensity', label: 'High-Press Turnover Index', starRaw: 'Elite System Trap', candRaw: 'Aggressive Gegenpress' },
-    { key: 'durability_longevity', label: 'Tenure Durability & Longevity', starRaw: `${activeStar.total_games} Matches`, candRaw: `${cand.total_games} Matches` }
-  ];
+  renderCoachRow(
+    '🥇 Major Honors & Silverware',
+    `${activeStar.trophies || 0} Titles`,
+    c => `${c.trophies || 0} Titles`,
+    c => (c.trophies || 0) > 0 ? '<span class="delta-positive">Proven Winner</span>' : '<span class="delta-neutral">Emerging Title Aspirant</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { if ((c.trophies || 0) > maxVal) { maxVal = c.trophies || 0; best = i; } });
+      return best;
+    }
+  );
 
-  step3Metrics.forEach(m => {
-    const starP = starPcts[m.key] !== undefined ? starPcts[m.key] : 80;
-    const candP = candPcts[m.key] !== undefined ? candPcts[m.key] : 75;
-    const pDiff = candP - starP;
-    const deltaClass = pDiff >= 0 ? 'delta-positive' : (pDiff >= -8 ? 'delta-neutral' : 'delta-negative');
-    const deltaStr = pDiff >= 0 ? `+${pDiff}%ile` : `${pDiff}%ile`;
+  renderCoachRow(
+    '🎮 Career Matches Managed',
+    `${activeStar.total_games} Matches`,
+    c => `${c.total_games} Matches`,
+    c => c.total_games >= 200 ? '<span class="delta-positive">Seasoned Veteran</span>' : '<span class="delta-neutral">High-Energy Track Record</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { if (c.total_games > maxVal) { maxVal = c.total_games; best = i; } });
+      return best;
+    }
+  );
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <strong>${m.label}</strong>
-      </td>
-      <td class="star-col">
-        <div class="table-stat-val">${m.starRaw}</div>
-        <div class="pct-bar-wrap">
-          <div class="pct-bar-fill ${getPercentileClass(starP)}" style="width: ${starP}%;"></div>
-          <span class="pct-bar-label">${starP}th %ile</span>
-        </div>
-      </td>
-      <td class="cand-col">
-        <div class="table-stat-val">${m.candRaw}</div>
-        <div class="pct-bar-wrap">
-          <div class="pct-bar-fill ${getPercentileClass(candP)}" style="width: ${candP}%;"></div>
-          <span class="pct-bar-label">${candP}th %ile</span>
-        </div>
-      </td>
-      <td style="font-family: var(--font-mono); font-size: 0.82rem;">
-        <span class="${deltaClass}">${deltaStr}</span>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // STEP 4: RANK POTENTIAL MANAGERS & CONTRACT DOSSIER
+  // STEP 4: FINANCIAL REALITY & CONTRACT
   const step4Hdr = document.createElement('tr');
   step4Hdr.className = 'comp-step-row comp-step-4-hdr';
   step4Hdr.innerHTML = `
-    <td colspan="4">
+    <td colspan="${colSpanCount}">
       <div class="step-header-cell">
         <span class="step-hdr-badge badge-step-4">STEP 04</span>
-        <span class="step-hdr-title">RANK POTENTIAL MANAGERS & CONTRACT DOSSIER</span>
-        <span class="step-hdr-sub">Multi-factor weighted compatibility, wage arbitrage, buyout release & agency pipeline</span>
+        <span class="step-hdr-title">VERIFY FINANCIAL FEASIBILITY & COMPOSITE FIT</span>
+        <span class="step-hdr-sub">Annual wage, release buyout clause, contract status and executive rating</span>
       </div>
     </td>
   `;
   tbody.appendChild(step4Hdr);
 
-  const wageSavings = activeStar.annual_wage_eur - cand.annual_wage_eur;
-  const ageDiff = activeStar.age - cand.age;
-
-  const step4Rows = [
-    {
-      metric: '🎯 Composite Managerial Match Score',
-      starVal: '<span style="font-family: var(--font-mono); font-weight: 800; color: var(--accent-cyan);">100.0% (Benchmark)</span>',
-      candVal: `<span class="score-highlight">${cand.composite_match_score}% Match</span>`,
-      delta: `<span class="delta-positive">${getMatchTierBadge(cand.composite_match_score)}</span>`
-    },
-    {
-      metric: '⚡ Tactical System Fit (40% Weight)',
-      starVal: '100.0%',
-      candVal: `${cand.tactical_similarity_score}%`,
-      delta: cand.tactical_similarity_score >= 85 ? '<span class="delta-positive">✓ Elite System Alignment</span>' : '<span class="delta-neutral">High System Affinity</span>'
-    },
-    {
-      metric: '📐 Formation Compatibility (25% Weight)',
-      starVal: '100.0%',
-      candVal: `${cand.formation_compatibility_score}%`,
-      delta: cand.formation_compatibility_score >= 90 ? '<span class="delta-positive">✓ Direct System Mirror</span>' : '<span class="delta-neutral">Compatible Transition</span>'
-    },
-    {
-      metric: '💰 Financial & Wage Feasibility (20% Weight)',
-      starVal: 'Reference Wage',
-      candVal: `${cand.financial_feasibility_score}%`,
-      delta: cand.financial_feasibility_score >= 85 ? '<span class="delta-positive">✓ Highly Feasible Payroll</span>' : '<span class="delta-neutral">Manageable Window</span>'
-    },
-    {
-      metric: '🚀 Age Runway & Longevity (15% Weight)',
-      starVal: `${activeStar.age} yrs old`,
-      candVal: `${cand.age} yrs old (${cand.growth_potential_score}% Runway)`,
-      delta: ageDiff > 0 ? `<span class="delta-positive">+${ageDiff} yrs Career Runway</span>` : `<span class="delta-neutral">${Math.abs(ageDiff)} yrs older</span>`
-    },
-    {
-      metric: '💼 Annual Wage & Payroll Arbitrage',
-      starVal: `${formatCurrency(activeStar.annual_wage_eur)} / yr`,
-      candVal: `${formatCurrency(cand.annual_wage_eur)} / yr`,
-      delta: wageSavings >= 0 ? `<span class="delta-positive">+${formatCurrency(wageSavings)}/yr Payroll Relief</span>` : `<span class="delta-negative">-${formatCurrency(Math.abs(wageSavings))}/yr Delta</span>`
-    },
-    {
-      metric: '🔓 Contract Buyout / Release Clause',
-      starVal: activeStar.buyout_clause_eur ? formatCurrency(activeStar.buyout_clause_eur) : 'N/A',
-      candVal: formatCurrency(cand.buyout_clause_eur),
-      delta: `<span class="delta-neutral">Estimated Compensation Fee</span>`
-    },
-    {
-      metric: '👔 Representation / Management Agency',
-      starVal: activeStar.agent || 'Direct / Agency',
-      candVal: cand.agent || 'Independent Agency',
-      delta: activeStar.agent === cand.agent ? '<span class="delta-positive">✓ Shared Agency Pipeline</span>' : '<span class="delta-neutral">Independent Pipeline</span>'
-    },
-    {
-      metric: '📄 Contract Status & Expiration',
-      starVal: activeStar.contract_status || 'Tenure Concluded',
-      candVal: cand.contract_status || 'Active Contract',
-      delta: '<span class="delta-neutral">Approachable Window</span>'
-    },
-    {
-      metric: '⏳ Sporting Succession Recommendation',
-      starVal: 'Managerial Void Benchmark',
-      candVal: cand.composite_match_score >= 88 ? 'Immediate Priority Target' : 'Secondary Contingency Target',
-      delta: '<span class="delta-positive">Actionable Succession Profile</span>'
+  renderCoachRow(
+    '⚡ Composite Drop-In Score',
+    '100.0% Benchmark',
+    c => `<strong>${c.composite_match_score}% Match</strong>`,
+    c => c.composite_match_score >= 88 ? '<span class="delta-positive">✓ Tier 1 Immediate Successor</span>' : '<span class="delta-neutral">Tier 2 Strategic Target</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { if (c.composite_match_score > maxVal) { maxVal = c.composite_match_score; best = i; } });
+      return best;
     }
-  ];
+  );
 
-  step4Rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.metric}</strong></td>
-      <td class="star-col">${r.starVal}</td>
-      <td class="cand-col">${r.candVal}</td>
-      <td style="font-family: var(--font-mono); font-size: 0.82rem;">${r.delta}</td>
+  renderCoachRow(
+    '💰 Annual Manager Salary',
+    formatCurrency(activeStar.annual_wage_eur || 6_000_000),
+    c => formatCurrency(c.annual_wage_eur || 3_500_000),
+    c => {
+      const savings = (activeStar.annual_wage_eur || 6_000_000) - (c.annual_wage_eur || 3_500_000);
+      return savings >= 0 ? `<span class="delta-positive">+${formatCurrency(savings)}/yr Savings</span>` : `<span class="delta-negative">-${formatCurrency(Math.abs(savings))}/yr Surge</span>`;
+    },
+    list => {
+      let minVal = 999_999_999, best = 0;
+      list.forEach((c, i) => { if ((c.annual_wage_eur || 0) < minVal) { minVal = c.annual_wage_eur || 0; best = i; } });
+      return best;
+    }
+  );
+
+  renderCoachRow(
+    '🔓 Contract Buyout Clause',
+    activeStar.buyout_clause_eur ? formatCurrency(activeStar.buyout_clause_eur) : 'N/A (Departing)',
+    c => c.buyout_clause_eur ? formatCurrency(c.buyout_clause_eur) : 'Free Agent',
+    c => c.buyout_clause_eur ? '<span class="delta-neutral">Clause Payable</span>' : '<span class="delta-positive">Zero Buyout / Free</span>',
+    list => {
+      let minVal = 999_999_999, best = 0;
+      list.forEach((c, i) => { const bo = c.buyout_clause_eur || 0; if (bo < minVal) { minVal = bo; best = i; } });
+      return best;
+    }
+  );
+
+  renderCoachRow(
+    '📄 Contract Status & Agency',
+    `${activeStar.contract_status || 'Departing'} (${activeStar.agent || 'Direct'})`,
+    c => `${c.contract_status || 'Active Contract'} (${c.agent || 'Independent Agency'})`,
+    c => (c.contract_status && c.contract_status.includes('Expiry')) ? '<span class="delta-leverage">⚠️ Contract Expiry Opportunity</span>' : '<span class="delta-neutral">Direct Negotiation</span>'
+  );
+}
+
+
+// -----------------------------------------------------------------------------
+// 3-WAY MULTI-CANDIDATE RADAR FACEOFF LOGIC & TOOLBAR CONTROLS
+// -----------------------------------------------------------------------------
+function updateMultiSlotsToolbar() {
+  const container = document.getElementById('multiSlotsSummary');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const activeCohort = currentEntityMode === 'coaches' ? multiComparisonCoachCandidates : multiComparisonCandidates;
+  
+  activeCohort.forEach((cand, idx) => {
+    const chip = document.createElement('div');
+    chip.className = `multi-slot-chip multi-slot-${idx + 1} ${idx === 0 ? 'slot-primary' : ''}`;
+    chip.title = `${cand.name} (Slot ${idx + 1}${idx === 0 ? ' • Primary Focus' : ''}) - Click to set as Primary Focus`;
+    chip.innerHTML = `
+      <span class="slot-badge">Slot ${idx + 1}</span>
+      <span class="slot-name">${cand.name}</span>
+      ${idx === 0 ? '<span class="primary-indicator">★</span>' : ''}
+      <button class="slot-remove-btn" data-slot-idx="${idx}" title="Remove ${cand.name} from radar">✕</button>
     `;
-    tbody.appendChild(tr);
+
+    chip.addEventListener('click', (e) => {
+      if (e.target.classList.contains('slot-remove-btn')) return;
+      if (currentEntityMode === 'coaches') {
+        selectCoachCandidateForRadar(cand);
+      } else {
+        selectCandidateForRadar(cand);
+      }
+    });
+
+    const removeBtn = chip.querySelector('.slot-remove-btn');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeCandidateFromSlot(idx);
+      });
+    }
+
+    container.appendChild(chip);
   });
+
+  if (activeCohort.length < 3) {
+    const hint = document.createElement('span');
+    hint.className = 'multi-empty-slot';
+    hint.textContent = `+ Add ${3 - activeCohort.length} more from cards below`;
+    container.appendChild(hint);
+  }
+}
+
+function updateCardMultiCompareBadges() {
+  const activeCohort = currentEntityMode === 'coaches' ? multiComparisonCoachCandidates : multiComparisonCandidates;
+
+  if (currentEntityMode === 'coaches') {
+    document.querySelectorAll('#recCardsGrid .candidate-card').forEach((card, idx) => {
+      card.classList.remove('active-compare', 'active-compare-slot-1', 'active-compare-slot-2', 'active-compare-slot-3');
+      const toggleBtn = card.querySelector('.btn-multi-toggle');
+      const actionBtnSpan = card.querySelector('.card-action-btn span');
+
+      const candNameEl = card.querySelector('.cand-name');
+      const candName = candNameEl ? candNameEl.textContent.trim() : '';
+
+      const slotIdx = activeCohort.findIndex(c => c.name === candName);
+      if (slotIdx !== -1) {
+        card.classList.add(`active-compare-slot-${slotIdx + 1}`);
+        if (slotIdx === 0) card.classList.add('active-compare');
+        if (toggleBtn) {
+          toggleBtn.className = `btn-multi-toggle in-slot-${slotIdx + 1}`;
+          toggleBtn.innerHTML = `✓ In Radar (Slot ${slotIdx + 1})`;
+        }
+        if (actionBtnSpan) {
+          actionBtnSpan.textContent = slotIdx === 0 ? '✓ Primary Manager Focus' : 'Set as Primary Focus';
+        }
+      } else {
+        if (toggleBtn) {
+          toggleBtn.className = 'btn-multi-toggle';
+          toggleBtn.innerHTML = '+ Add to 3-Way Radar';
+        }
+        if (actionBtnSpan) {
+          actionBtnSpan.textContent = 'Set as Primary Focus';
+        }
+      }
+    });
+  } else {
+    document.querySelectorAll('#recCardsGrid .candidate-card').forEach(card => {
+      card.classList.remove('active-compare', 'active-compare-slot-1', 'active-compare-slot-2', 'active-compare-slot-3');
+      const toggleBtn = card.querySelector('.btn-multi-toggle');
+      const actionBtnSpan = card.querySelector('.card-action-btn span');
+
+      const cardId = card.id || '';
+      const pidStr = cardId.replace('cand-card-', '');
+      const pid = parseInt(pidStr);
+
+      const slotIdx = activeCohort.findIndex(c => c.player_id === pid);
+      if (slotIdx !== -1) {
+        card.classList.add(`active-compare-slot-${slotIdx + 1}`);
+        if (slotIdx === 0) card.classList.add('active-compare');
+        if (toggleBtn) {
+          toggleBtn.className = `btn-multi-toggle in-slot-${slotIdx + 1}`;
+          toggleBtn.innerHTML = `✓ In Radar (Slot ${slotIdx + 1})`;
+        }
+        if (actionBtnSpan) {
+          actionBtnSpan.textContent = slotIdx === 0 ? '✓ Primary Drop-In Focus' : 'Set as Primary Focus';
+        }
+      } else {
+        if (toggleBtn) {
+          toggleBtn.className = 'btn-multi-toggle';
+          toggleBtn.innerHTML = '+ Add to 3-Way Radar';
+        }
+        if (actionBtnSpan) {
+          actionBtnSpan.textContent = 'Set as Primary Focus';
+        }
+      }
+    });
+  }
+}
+
+function toggleCandidateInMultiCompare(cand) {
+  if (currentEntityMode === 'coaches') {
+    const existingIdx = multiComparisonCoachCandidates.findIndex(c => c.name === cand.name);
+    if (existingIdx !== -1) {
+      if (multiComparisonCoachCandidates.length <= 1) {
+        showToast('At least 1 candidate must remain in the radar view');
+        return;
+      }
+      multiComparisonCoachCandidates.splice(existingIdx, 1);
+      currentCoachCandidate = multiComparisonCoachCandidates[0];
+      showToast(`Removed ${cand.name} from multi-radar faceoff`);
+    } else {
+      if (multiComparisonCoachCandidates.length >= 3) {
+        multiComparisonCoachCandidates.pop(); // Replace Slot 3
+      }
+      multiComparisonCoachCandidates.push(cand);
+      showToast(`Added ${cand.name} to 3-Way Radar (Slot ${multiComparisonCoachCandidates.length})`);
+    }
+    updateMultiSlotsToolbar();
+    updateCardMultiCompareBadges();
+    drawRadarChart();
+    renderCoachComparisonTable();
+  } else {
+    const existingIdx = multiComparisonCandidates.findIndex(c => c.player_id === cand.player_id);
+    if (existingIdx !== -1) {
+      if (multiComparisonCandidates.length <= 1) {
+        showToast('At least 1 candidate must remain in the radar view');
+        return;
+      }
+      multiComparisonCandidates.splice(existingIdx, 1);
+      currentCandidate = multiComparisonCandidates[0];
+      showToast(`Removed ${cand.name} from multi-radar faceoff`);
+    } else {
+      if (multiComparisonCandidates.length >= 3) {
+        multiComparisonCandidates.pop(); // Replace Slot 3
+      }
+      multiComparisonCandidates.push(cand);
+      showToast(`Added ${cand.name} to 3-Way Radar (Slot ${multiComparisonCandidates.length})`);
+    }
+    updateMultiSlotsToolbar();
+    updateCardMultiCompareBadges();
+    drawRadarChart();
+    renderComparisonTable();
+  }
+}
+
+function removeCandidateFromSlot(slotIdx) {
+  if (currentEntityMode === 'coaches') {
+    if (multiComparisonCoachCandidates.length <= 1) {
+      showToast('At least 1 candidate must remain in the radar view');
+      return;
+    }
+    const removed = multiComparisonCoachCandidates.splice(slotIdx, 1)[0];
+    currentCoachCandidate = multiComparisonCoachCandidates[0];
+    showToast(`Removed ${removed.name} from radar faceoff`);
+    updateMultiSlotsToolbar();
+    updateCardMultiCompareBadges();
+    drawRadarChart();
+    renderCoachComparisonTable();
+  } else {
+    if (multiComparisonCandidates.length <= 1) {
+      showToast('At least 1 candidate must remain in the radar view');
+      return;
+    }
+    const removed = multiComparisonCandidates.splice(slotIdx, 1)[0];
+    currentCandidate = multiComparisonCandidates[0];
+    showToast(`Removed ${removed.name} from radar faceoff`);
+    updateMultiSlotsToolbar();
+    updateCardMultiCompareBadges();
+    drawRadarChart();
+    renderComparisonTable();
+  }
+}
+
+function setTop3MultiCompare() {
+  if (currentEntityMode === 'coaches') {
+    const activeStar = getActiveCoachData();
+    if (!activeStar) return;
+    const dep = engineData.coach_departures[currentCoachDepartureIndex];
+    let baseList = dep ? (dep.recommendations || []) : [];
+    const filtered = baseList.filter(c => c.age <= filterMaxAge);
+    filtered.sort((a, b) => (b.composite_match_score || 0) - (a.composite_match_score || 0));
+    multiComparisonCoachCandidates = filtered.slice(0, 3);
+    if (multiComparisonCoachCandidates.length > 0) {
+      currentCoachCandidate = multiComparisonCoachCandidates[0];
+    }
+    showToast('Loaded Top 3 Drop-In Managers into 3-Way Radar Faceoff');
+    updateMultiSlotsToolbar();
+    updateCardMultiCompareBadges();
+    drawRadarChart();
+    renderCoachComparisonTable();
+  } else {
+    const activeStar = getActiveStarData();
+    if (!activeStar) return;
+    const dep = engineData.departures[currentDepartureIndex];
+    let baseList = [];
+    if (planningHorizon === 'succession_3yr' && dep && dep.succession_recommendations && dep.succession_recommendations.length) {
+      baseList = [...dep.succession_recommendations];
+    } else if (dep) {
+      baseList = [...(dep.recommendations || [])];
+    }
+    const starFee = activeStar.fee || 50_000_000;
+    const budgetLimit = starFee * filterBudgetRatio;
+    const filtered = baseList.filter(c => {
+      if (c.market_value_in_eur > budgetLimit) return false;
+      if (c.age > filterMaxAge) return false;
+      if (c.composite_match_score < filterMinScore) return false;
+      return true;
+    });
+    filtered.sort((a, b) => b.composite_match_score - a.composite_match_score);
+    multiComparisonCandidates = filtered.slice(0, 3);
+    if (multiComparisonCandidates.length > 0) {
+      currentCandidate = multiComparisonCandidates[0];
+    }
+    showToast('Loaded Top 3 Drop-In Replacements into 3-Way Radar Faceoff');
+    updateMultiSlotsToolbar();
+    updateCardMultiCompareBadges();
+    drawRadarChart();
+    renderComparisonTable();
+  }
+}
+
+function resetToSingleCompare() {
+  if (currentEntityMode === 'coaches') {
+    multiComparisonCoachCandidates = currentCoachCandidate ? [currentCoachCandidate] : [];
+    showToast('Reset Faceoff to 1-on-1 Benchmark');
+    updateMultiSlotsToolbar();
+    updateCardMultiCompareBadges();
+    drawRadarChart();
+    renderCoachComparisonTable();
+  } else {
+    multiComparisonCandidates = currentCandidate ? [currentCandidate] : [];
+    showToast('Reset Faceoff to 1-on-1 Benchmark');
+    updateMultiSlotsToolbar();
+    updateCardMultiCompareBadges();
+    drawRadarChart();
+    renderComparisonTable();
+  }
 }
 
 function selectCandidateForRadar(cand) {
   currentCandidate = cand;
-  document.querySelectorAll('.candidate-card').forEach(c => {
-    c.classList.remove('active-compare');
-    const btnSpan = c.querySelector('.card-action-btn span');
-    if (btnSpan) btnSpan.textContent = 'Compare in Radar';
-  });
-
-  const el = document.getElementById(`cand-card-${cand.player_id}`);
-  if (el) {
-    el.classList.add('active-compare');
-    const btnSpan = el.querySelector('.card-action-btn span');
-    if (btnSpan) btnSpan.textContent = '✓ Viewing in Radar';
-  }
+  // Promote to Slot 1 in multi-comparison list
+  multiComparisonCandidates = [cand, ...multiComparisonCandidates.filter(c => c.player_id !== cand.player_id)].slice(0, 3);
+  updateMultiSlotsToolbar();
+  updateCardMultiCompareBadges();
 
   drawRadarChart();
   renderComparisonTable();
@@ -2488,17 +2798,10 @@ function renderComparisonTable() {
   const cand = currentCandidate;
   if (!activeStar) return;
 
-  const thStar = document.getElementById('thStarName');
-  const thCand = document.getElementById('thCandName');
-  const legStar = document.getElementById('legendStarName');
-  const legCand = document.getElementById('legendCandName');
+  const activeCandList = (multiComparisonCandidates && multiComparisonCandidates.length) ?
+    multiComparisonCandidates.slice(0, 3) : (cand ? [cand] : []);
 
-  if (thStar) thStar.textContent = activeStar.name;
-  if (thCand) thCand.textContent = cand ? cand.name : 'Candidate';
-  if (legStar) legStar.textContent = activeStar.name;
-  if (legCand) legCand.textContent = cand ? cand.name : 'Candidate';
-
-  // Update Face-off Banner
+  // Update Faceoff Star Side
   const faceoffStarImg = document.getElementById('faceoffStarImg');
   const faceoffStarInitials = document.getElementById('faceoffStarInitials');
   const faceoffStarName = document.getElementById('faceoffStarName');
@@ -2518,43 +2821,85 @@ function renderComparisonTable() {
     }
   }
 
-  const faceoffCandImg = document.getElementById('faceoffCandImg');
-  const faceoffCandInitials = document.getElementById('faceoffCandInitials');
-  const faceoffCandName = document.getElementById('faceoffCandName');
-  const faceoffCandClub = document.getElementById('faceoffCandClub');
+  // Update Faceoff Candidates Side
+  const faceoffCandidatesContainer = document.getElementById('faceoffCandidatesContainer');
   const faceoffMatchScore = document.getElementById('faceoffMatchScore');
 
-  if (cand) {
-    if (faceoffCandName) faceoffCandName.textContent = cand.name;
-    if (faceoffCandClub) faceoffCandClub.textContent = `${cand.current_club_name} • ${cand.sub_position || cand.position}`;
-    if (faceoffMatchScore) faceoffMatchScore.textContent = `${cand.composite_match_score}% Match`;
-    if (faceoffCandImg && faceoffCandInitials) {
-      if (cand.image_url) {
-        faceoffCandImg.src = cand.image_url;
-        faceoffCandImg.style.display = 'block';
-        faceoffCandInitials.style.display = 'none';
-      } else {
-        faceoffCandImg.style.display = 'none';
-        faceoffCandInitials.style.display = 'flex';
-        faceoffCandInitials.textContent = getInitials(cand.name);
-      }
+  if (faceoffMatchScore) {
+    faceoffMatchScore.textContent = cand ? `${cand.composite_match_score}% Match` : '--%';
+  }
+
+  if (faceoffCandidatesContainer) {
+    if (activeCandList.length > 1) {
+      let cardsHtml = '<div class="faceoff-candidates-grid">';
+      activeCandList.forEach((c, idx) => {
+        const isPrim = (idx === 0);
+        cardsHtml += `
+          <div class="faceoff-cand-mini-card ${isPrim ? 'is-primary' : ''} cand-slot-${idx + 1}" data-player-id="${c.player_id}" title="Click to set as Primary Focus">
+            <div class="mini-slot-badge">Slot ${idx + 1}${isPrim ? ' • Primary' : ''}</div>
+            <div class="mini-avatar-wrap">
+              ${c.image_url ? `<img src="${c.image_url}" class="mini-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />` : ''}
+              <div class="mini-avatar-initials" style="${c.image_url ? 'display: none;' : ''}">${getInitials(c.name)}</div>
+            </div>
+            <div class="mini-cand-name">${c.name}</div>
+            <div class="mini-cand-meta">${c.current_club_name || c.club || ''} • Age ${c.age}</div>
+            <div class="mini-cand-match">${c.composite_match_score}% Match</div>
+          </div>
+        `;
+      });
+      cardsHtml += '</div>';
+      faceoffCandidatesContainer.innerHTML = cardsHtml;
+
+      faceoffCandidatesContainer.querySelectorAll('.faceoff-cand-mini-card').forEach(mc => {
+        mc.addEventListener('click', () => {
+          const pid = parseInt(mc.getAttribute('data-player-id'));
+          const found = activeCandList.find(c => c.player_id === pid);
+          if (found) selectCandidateForRadar(found);
+        });
+      });
+    } else {
+      faceoffCandidatesContainer.innerHTML = `
+        <div class="faceoff-player cand-side">
+          <div class="faceoff-info" style="text-align: right;">
+            <div class="faceoff-tag" style="color: var(--accent-purple);">Target Drop-In Candidate</div>
+            <div class="faceoff-name" id="faceoffCandName">${cand ? cand.name : 'Selected Candidate'}</div>
+            <div class="faceoff-sub" id="faceoffCandClub">${cand ? `${cand.current_club_name} • ${cand.sub_position || cand.position}` : 'Scouted Club'}</div>
+          </div>
+          <div class="faceoff-avatar-wrap">
+            <img id="faceoffCandImg" class="faceoff-photo" src="${cand && cand.image_url ? cand.image_url : ''}" alt="Candidate" style="${cand && cand.image_url ? 'display: block;' : 'display: none;'}" onerror="this.style.display='none'; document.getElementById('faceoffCandInitials').style.display='flex';" />
+            <div id="faceoffCandInitials" class="faceoff-initials" style="${cand && cand.image_url ? 'display: none;' : 'display: flex;'}; background: linear-gradient(135deg, var(--accent-purple), #ec4899);">${cand ? getInitials(cand.name) : 'SC'}</div>
+          </div>
+        </div>
+      `;
     }
-  } else {
-    if (faceoffCandName) faceoffCandName.textContent = 'None Selected';
-    if (faceoffCandClub) faceoffCandClub.textContent = 'Awaiting Filter Selection';
-    if (faceoffMatchScore) faceoffMatchScore.textContent = '--%';
-    if (faceoffCandImg) faceoffCandImg.style.display = 'none';
-    if (faceoffCandInitials) {
-      faceoffCandInitials.style.display = 'flex';
-      faceoffCandInitials.textContent = '??';
-    }
+  }
+
+  // Populate dynamic Table Headers
+  const thead = document.getElementById('compTableHead');
+  if (thead) {
+    let thHtml = `<tr>
+      <th style="min-width: 220px;">Tactical Metric / Dimension</th>
+      <th class="star-col" id="thStarName" style="min-width: 150px;">${activeStar.name} <div class="th-sub">Departed Star Benchmark</div></th>`;
+
+    activeCandList.forEach((c, idx) => {
+      const colClass = `cand-col-${idx + 1}`;
+      thHtml += `
+        <th class="cand-col ${colClass}" ${idx === 0 ? 'id="thCandName"' : ''} style="min-width: 150px;">
+          <span class="slot-badge">Slot ${idx + 1}${idx === 0 ? ' • Primary' : ''}</span>
+          <span class="th-name">${c.name}</span>
+          <div class="th-sub">${c.composite_match_score}% Match</div>
+        </th>
+      `;
+    });
+    thHtml += `<th class="summary-col" style="min-width: 140px;">Cohort Analysis & Edge</th></tr>`;
+    thead.innerHTML = thHtml;
   }
 
   const tbody = document.getElementById('compTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  if (!cand) {
+  if (activeCandList.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
@@ -2565,70 +2910,34 @@ function renderComparisonTable() {
     return;
   }
 
-  // Common Star Properties
-  const starApps = activeStar.total_appearances || 0;
-  const starMins = activeStar.total_minutes || 0;
-  const starMinApp = activeStar.min_app || (starApps > 0 ? starMins / starApps : 75);
-  const starGoals = activeStar.total_goals !== undefined ? activeStar.total_goals : Math.round((activeStar.goals_per_90 || 0) * starMins / 90);
-  const starAssists = activeStar.total_assists !== undefined ? activeStar.total_assists : Math.round((activeStar.assists_per_90 || 0) * starMins / 90);
-  const starGA = starGoals + starAssists;
-  const starYellows = activeStar.total_yellows || 0;
-  const starReds = activeStar.total_reds || 0;
-  const starNat = activeStar.country_of_citizenship || 'Unknown';
-  const starCaps = activeStar.international_caps || 0;
-  const starIntGoals = activeStar.international_goals || 0;
-  const starHeight = activeStar.height || activeStar.height_in_cm || 180;
-  const starFee = activeStar.fee || 50_000_000;
-  const starWkWage = activeStar.wage_weekly_eur || 150000;
-  const starYrWage = activeStar.wage_annual_eur || (starWkWage * 52);
-  const starSeasonApps = activeStar.season_appearances || 0;
-  const starSeasonMins = activeStar.season_minutes || 0;
-  const starSeasonGoals = activeStar.season_goals || 0;
-  const starSeasonAssists = activeStar.season_assists || 0;
-  const starSeasonGA = starSeasonGoals + starSeasonAssists;
+  const colSpanCount = activeCandList.length + 2;
 
-  // Common Candidate Properties
-  const candApps = cand.total_appearances !== undefined ? cand.total_appearances : (cand.apps || 0);
-  const candMins = cand.total_minutes !== undefined ? cand.total_minutes : (cand.mins || 0);
-  const candMinApp = cand.minutes_per_app !== undefined ? cand.minutes_per_app : (cand.min_app || (candApps > 0 ? candMins / candApps : 70));
-  const candGoals = cand.total_goals !== undefined ? cand.total_goals : (cand.goals !== undefined ? cand.goals : Math.round((cand.goals_per_90 || 0) * candMins / 90));
-  const candAssists = cand.total_assists !== undefined ? cand.total_assists : (cand.assists !== undefined ? cand.assists : Math.round((cand.assists_per_90 || 0) * candMins / 90));
-  const candGA = candGoals + candAssists;
-  const candYellows = cand.total_yellows !== undefined ? cand.total_yellows : (cand.yellows || 0);
-  const candReds = cand.total_reds !== undefined ? cand.total_reds : (cand.reds || 0);
-  const candSeasonApps = cand.season_appearances !== undefined ? cand.season_appearances : (cand.s_apps || 0);
-  const candSeasonMins = cand.season_minutes !== undefined ? cand.season_minutes : (cand.s_mins || 0);
-  const candSeasonGoals = cand.season_goals !== undefined ? cand.season_goals : (cand.s_goals || 0);
-  const candSeasonAssists = cand.season_assists !== undefined ? cand.season_assists : (cand.s_assists || 0);
-  const candSeasonGA = candSeasonGoals + candSeasonAssists;
-  const candNat = cand.country_of_citizenship || cand.nat || 'Unknown';
-  const candCaps = cand.international_caps !== undefined ? cand.international_caps : (cand.caps || 0);
-  const candIntGoals = cand.international_goals !== undefined ? cand.international_goals : (cand.int_goals || 0);
-  const candHeight = cand.height_in_cm || cand.height || 180;
-  const candVal = cand.market_value_in_eur !== undefined ? cand.market_value_in_eur : (cand.val || 0);
-  const candSavingsEur = cand.savings_eur !== undefined ? cand.savings_eur : Math.max(0, starFee - candVal);
-  const candSavingsPct = cand.savings_pct !== undefined ? cand.savings_pct : (starFee > 0 ? Math.round((candSavingsEur / starFee) * 1000) / 10 : 0);
-  const candWkWage = cand.wage_weekly_eur || cand.wage_wk || 25000;
-  const candYrWage = cand.wage_annual_eur || cand.wage_yr || (candWkWage * 52);
+  function renderPlayerRow(metricLabel, starHtml, candValFn, summaryFn, bestIdxFn = null) {
+    const tr = document.createElement('tr');
+    let rowHtml = `<td><strong>${metricLabel}</strong></td><td class="star-col">${starHtml}</td>`;
+    
+    let bestIdx = -1;
+    if (bestIdxFn && activeCandList.length > 1) {
+      bestIdx = bestIdxFn(activeCandList);
+    }
 
-  // Deltas
-  const heightDiff = candHeight - starHeight;
-  const goalsDelta = candGoals - starGoals;
-  const assistsDelta = candAssists - starAssists;
-  const gaDelta = candGA - starGA;
-  const capsDelta = candCaps - starCaps;
-  const intGoalsDelta = candIntGoals - starIntGoals;
-  const wkWageDelta = starWkWage - candWkWage;
-  const yrWageDelta = starYrWage - candYrWage;
-  const ageDiff = (activeStar.age || 26) - (cand.age || 22);
+    activeCandList.forEach((c, idx) => {
+      const isBest = (bestIdx === idx);
+      const val = candValFn(c, idx);
+      rowHtml += `<td class="cand-col cand-col-${idx + 1} ${isBest ? 'best-metric-highlight' : ''}">${val}</td>`;
+    });
 
-  // ==========================================================================
-  // 🧭 STEP 1: IDENTIFY DEPARTING ROLE & TACTICAL ARCHETYPE
-  // ==========================================================================
+    const summary = summaryFn ? summaryFn(activeCandList[0], activeStar) : '<span class="delta-neutral">Complementary</span>';
+    rowHtml += `<td>${summary}</td>`;
+    tr.innerHTML = rowHtml;
+    tbody.appendChild(tr);
+  }
+
+  // STEP 1: IDENTIFY DEPARTING ROLE & TACTICAL ARCHETYPE
   const step1Hdr = document.createElement('tr');
   step1Hdr.className = 'comp-step-row comp-step-1-hdr';
   step1Hdr.innerHTML = `
-    <td colspan="4">
+    <td colspan="${colSpanCount}">
       <div class="step-header-cell">
         <span class="step-hdr-badge badge-step-1">STEP 01</span>
         <span class="step-hdr-title">IDENTIFY DEPARTING PLAYER'S ROLE & TACTICAL ARCHETYPE</span>
@@ -2638,357 +2947,361 @@ function renderComparisonTable() {
   `;
   tbody.appendChild(step1Hdr);
 
-  const step1Rows = [
-    {
-      metric: 'Tactical Sub-Role Archetype',
-      starVal: `<span class="archetype-tag tag-star">${activeStar.tactical_role || 'Talismanic Core'}</span>`,
-      candVal: `<span class="archetype-tag tag-cand">${cand.tactical_role || 'Tactical Operator'}</span>`,
-      delta: activeStar.tactical_role === cand.tactical_role ?
-        '<span class="delta-positive">✓ Direct Archetype Match</span>' :
-        '<span class="delta-subtle">Adjacent Archetype</span>'
+  renderPlayerRow(
+    'Tactical Sub-Role Archetype',
+    `<span class="archetype-tag tag-star">${activeStar.tactical_role || 'Talismanic Core'}</span>`,
+    c => `<span class="archetype-tag tag-cand">${c.tactical_role || 'Tactical Operator'}</span>`,
+    c => c.tactical_role === activeStar.tactical_role ? '<span class="delta-positive">✓ Direct Archetype Match</span>' : '<span class="delta-subtle">Adjacent Archetype</span>'
+  );
+
+  renderPlayerRow(
+    'Tactical Duties & Pitch Profile',
+    `<div class="tact-duty-text">${activeStar.role_description || 'Central engine orchestrating progression and pressing phases.'}</div>`,
+    c => `<div class="tact-duty-text">${c.role_description || 'Counterpart replicating phase outputs with high tactical fluidity.'}</div>`,
+    c => '<span class="delta-neutral">Role Complementary</span>'
+  );
+
+  renderPlayerRow(
+    'Preferred Foot Symmetry',
+    `<strong>${activeStar.foot || 'Right'}</strong>`,
+    c => `<strong>${c.foot || 'Right'}</strong>`,
+    c => (c.foot || 'Right') === (activeStar.foot || 'Right') ? '<span class="delta-positive">✓ Natural Footing Symmetry</span>' : '<span class="delta-neutral">Inverted Symmetry Option</span>'
+  );
+
+  renderPlayerRow(
+    'Formation Fluidity & Usages',
+    `${activeStar.formation || '4-3-3'} (Fluid across 3 shapes)`,
+    c => `${c.formation || '4-3-3'} (${c.formation_compatibility_score || 85}% shape fit)`,
+    c => '<span class="delta-positive">System Compatible</span>'
+  );
+
+  renderPlayerRow(
+    'Physical Frame & Height',
+    `${activeStar.height_in_cm || activeStar.height || 180} cm`,
+    c => `${c.height_in_cm || c.height || 180} cm`,
+    c => {
+      const diff = (c.height_in_cm || c.height || 180) - (activeStar.height_in_cm || activeStar.height || 180);
+      return diff >= 0 ? `<span class="delta-positive">+${diff} cm Aerial Leverage</span>` : `<span class="delta-neutral">${diff} cm Lower Center of Gravity</span>`;
     },
-    {
-      metric: 'Tactical Duties & Pitch Profile',
-      starVal: `<div class="tact-duty-text">${activeStar.role_description || 'Central engine orchestrating progression and pressing phases.'}</div>`,
-      candVal: `<div class="tact-duty-text">${cand.role_description || 'Counterpart replicating phase outputs with high tactical fluidity.'}</div>`,
-      delta: '<span class="delta-neutral">Role Complementary</span>'
-    },
-    {
-      metric: 'Preferred Foot & Tactical Symmetry',
-      starVal: `<div class="foot-cell"><span class="foot-badge">${activeStar.foot || 'Right'} Foot</span><span class="foot-sub">${activeStar.foot_trait || ''}</span></div>`,
-      candVal: `<div class="foot-cell"><span class="foot-badge">${cand.foot || 'Right'} Foot</span><span class="foot-sub">${cand.foot_trait || ''}</span></div>`,
-      delta: (activeStar.foot && cand.foot && (activeStar.foot.toLowerCase() === cand.foot.toLowerCase() || cand.foot.toLowerCase() === 'both')) ?
-        '<span class="delta-positive">✓ Footing Symmetry Match (+2.5)</span>' :
-        '<span class="delta-subtle">Inverse / Cross-Flank</span>'
-    },
-    {
-      metric: 'Primary System Formation',
-      starVal: `${activeStar.formation || '4-3-3 Attacking'}`,
-      candVal: `${cand.top_formation || '4-2-3-1'} <span class="pct-badge ${cand.formation_compatibility_score >= 90 ? 'pct-elite' : 'pct-good'}">${cand.formation_compatibility_score}% Fit</span>`,
-      delta: (activeStar.formation && cand.top_formation && activeStar.formation.split(' ')[0] === cand.top_formation.split(' ')[0]) ?
-        '<span class="delta-positive">✓ Direct System Base</span>' :
-        '<span class="delta-neutral">System Adaptable</span>'
-    },
-    {
-      metric: 'Physical Height & Frame',
-      starVal: `${starHeight} cm`,
-      candVal: `${candHeight} cm`,
-      delta: `<span class="delta-neutral">${heightDiff >= 0 ? '+' : ''}${heightDiff} cm (${heightDiff >= 0 ? 'Taller Frame' : 'Compact Build'})</span>`
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const h = c.height_in_cm || c.height || 180; if (h > maxVal) { maxVal = h; best = i; } });
+      return best;
     }
-  ];
+  );
 
-  step1Rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.metric}</strong></td>
-      <td class="star-col">${r.starVal}</td>
-      <td class="cand-col">${r.candVal}</td>
-      <td style="font-family: var(--font-mono); font-size: 0.82rem;">${r.delta}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // ==========================================================================
-  // 📊 STEP 2: PERFORMANCE DATA & STATS (INCLUDING NATIONAL TEAM)
-  // ==========================================================================
+  // STEP 2: CALCULATE VOID & PER-90 METRICS
   const step2Hdr = document.createElement('tr');
   step2Hdr.className = 'comp-step-row comp-step-2-hdr';
   step2Hdr.innerHTML = `
-    <td colspan="4">
+    <td colspan="${colSpanCount}">
       <div class="step-header-cell">
         <span class="step-hdr-badge badge-step-2">STEP 02</span>
-        <span class="step-hdr-title">COLLECT PERFORMANCE DATA & PLAYER MATCH STATS</span>
-        <span class="step-hdr-sub">Appearances, minutes load, career output, discipline & senior national team</span>
+        <span class="step-hdr-title">CALCULATE VOID PER 90 & PRODUCTION REPLICATION</span>
+        <span class="step-hdr-sub">Rate-based goals, assists, durability minutes, disciplinary stability & season form</span>
       </div>
     </td>
   `;
   tbody.appendChild(step2Hdr);
 
-  const step2Rows = [
-    {
-      metric: '🔥 2026/2027 Season Match Appearances',
-      starVal: `<strong class="stat-highlight" style="color: var(--accent-amber);">${starSeasonApps}</strong> matches (26/27)`,
-      candVal: `<strong class="stat-highlight" style="color: var(--accent-amber);">${candSeasonApps}</strong> matches (26/27)`,
-      delta: `<span class="delta-neutral">${(candSeasonApps - starSeasonApps) >= 0 ? '+' : ''}${(candSeasonApps - starSeasonApps)} matches in 26/27</span>`
+  renderPlayerRow(
+    '⚽ Goals / 90 min',
+    `<strong>${activeStar.goals_per_90 || 0}</strong>`,
+    c => `<strong>${c.goals_per_90 || 0}</strong>`,
+    c => {
+      const diff = (c.goals_per_90 || 0) - (activeStar.goals_per_90 || 0);
+      return diff >= 0 ? `<span class="delta-positive">+${diff.toFixed(2)} G/90 Surplus</span>` : `<span class="delta-negative">${diff.toFixed(2)} G/90 Gap</span>`;
     },
-    {
-      metric: '⏱️ 2026/2027 Season Minutes On Pitch',
-      starVal: `<strong class="stat-highlight" style="color: var(--accent-amber);">${starSeasonMins.toLocaleString()}</strong> mins (26/27)`,
-      candVal: `<strong class="stat-highlight" style="color: var(--accent-amber);">${candSeasonMins.toLocaleString()}</strong> mins (26/27)`,
-      delta: `<span class="delta-neutral">${(candSeasonMins - starSeasonMins) >= 0 ? '+' : ''}${(candSeasonMins - starSeasonMins).toLocaleString()} mins</span>`
-    },
-    {
-      metric: '🎯 2026/2027 Season Output (Goals + Assists)',
-      starVal: `<span class="ga-badge ga-star" style="background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.4); color: #fbbf24;">${starSeasonGoals}G + ${starSeasonAssists}A (${starSeasonGA} G+A)</span>`,
-      candVal: `<span class="ga-badge ga-cand" style="background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.4); color: #fbbf24;">${candSeasonGoals}G + ${candSeasonAssists}A (${candSeasonGA} G+A)</span>`,
-      delta: `<span class="${(candSeasonGA - starSeasonGA) >= 0 ? 'delta-positive' : 'delta-subtle'}">${(candSeasonGA - starSeasonGA) >= 0 ? '+' : ''}${(candSeasonGA - starSeasonGA)} G+A in 26/27</span>`
-    },
-    {
-      metric: 'Total Career Matches / Appearances',
-      starVal: `<strong class="stat-highlight">${starApps.toLocaleString()}</strong> matches`,
-      candVal: `<strong class="stat-highlight">${candApps.toLocaleString()}</strong> matches`,
-      delta: `<span class="delta-neutral">${(candApps - starApps) >= 0 ? '+' : ''}${(candApps - starApps).toLocaleString()} matches</span>`
-    },
-    {
-      metric: 'Total Minutes Played',
-      starVal: `<strong class="stat-highlight">${starMins.toLocaleString()}</strong> mins`,
-      candVal: `<strong class="stat-highlight">${candMins.toLocaleString()}</strong> mins`,
-      delta: `<span class="delta-neutral">${(candMins - starMins) >= 0 ? '+' : ''}${(candMins - starMins).toLocaleString()} mins</span>`
-    },
-    {
-      metric: 'Minutes / Match Load & Durability',
-      starVal: `${starMinApp.toFixed(1)} m / app`,
-      candVal: `${candMinApp.toFixed(1)} m / app`,
-      delta: candMinApp >= 75 ?
-        '<span class="delta-positive">✓ High Starter Durability</span>' :
-        '<span class="delta-subtle">Rotational Sample</span>'
-    },
-    {
-      metric: 'Career Goals (All Competitions)',
-      starVal: `<strong class="stat-highlight">${starGoals.toLocaleString()}</strong> goals`,
-      candVal: `<strong class="stat-highlight">${candGoals.toLocaleString()}</strong> goals`,
-      delta: `<span class="${goalsDelta >= 0 ? 'delta-positive' : 'delta-subtle'}">${goalsDelta >= 0 ? '+' : ''}${goalsDelta.toLocaleString()} goals</span>`
-    },
-    {
-      metric: 'Career Assists (All Competitions)',
-      starVal: `<strong class="stat-highlight">${starAssists.toLocaleString()}</strong> assists`,
-      candVal: `<strong class="stat-highlight">${candAssists.toLocaleString()}</strong> assists`,
-      delta: `<span class="${assistsDelta >= 0 ? 'delta-positive' : 'delta-subtle'}">${assistsDelta >= 0 ? '+' : ''}${assistsDelta.toLocaleString()} assists</span>`
-    },
-    {
-      metric: 'Total Goal Contributions (G+A)',
-      starVal: `<span class="ga-badge ga-star">${starGA.toLocaleString()} G+A</span>`,
-      candVal: `<span class="ga-badge ga-cand">${candGA.toLocaleString()} G+A</span>`,
-      delta: `<span class="${gaDelta >= 0 ? 'delta-positive' : 'delta-subtle'}">${gaDelta >= 0 ? '+' : ''}${gaDelta.toLocaleString()} G+A</span>`
-    },
-    {
-      metric: 'Disciplinary Record (Cards)',
-      starVal: `<span class="card-pill yellow-pill">🟨 ${starYellows}</span> <span class="card-pill red-pill">🟥 ${starReds}</span>`,
-      candVal: `<span class="card-pill yellow-pill">🟨 ${candYellows}</span> <span class="card-pill red-pill">🟥 ${candReds}</span>`,
-      delta: candReds === 0 ?
-        '<span class="delta-positive">✓ Zero Red Cards</span>' :
-        `<span class="delta-subtle">${candReds} Career Reds</span>`
-    },
-    {
-      metric: '🌍 Senior National Team (Country)',
-      starVal: `<span class="nat-team-badge">🏴 ${starNat}</span>`,
-      candVal: `<span class="nat-team-badge">🏳️ ${candNat}</span>`,
-      delta: starNat === candNat ?
-        '<span class="delta-positive">✓ Same National Setup</span>' :
-        '<span class="delta-neutral">International Pedigree</span>'
-    },
-    {
-      metric: '🎖️ Senior International Caps',
-      starVal: `<strong class="stat-highlight">${starCaps}</strong> Senior Caps`,
-      candVal: `<strong class="stat-highlight">${candCaps}</strong> Senior Caps`,
-      delta: `<span class="${capsDelta >= 0 ? 'delta-positive' : 'delta-subtle'}">${capsDelta >= 0 ? '+' : ''}${capsDelta} Caps</span>`
-    },
-    {
-      metric: '⚽ Senior International Goals',
-      starVal: `<strong class="stat-highlight">${starIntGoals}</strong> Int'l Goals`,
-      candVal: `<strong class="stat-highlight">${candIntGoals}</strong> Int'l Goals`,
-      delta: `<span class="${intGoalsDelta >= 0 ? 'delta-positive' : 'delta-subtle'}">${intGoalsDelta >= 0 ? '+' : ''}${intGoalsDelta} Goals</span>`
-    },
-    {
-      metric: '🌐 Senior International Status',
-      starVal: `<span class="intl-tier-badge tier-elite">${getInternationalStatus(starCaps)}</span>`,
-      candVal: `<span class="intl-tier-badge ${candCaps >= 25 ? 'tier-elite' : (candCaps >= 8 ? 'tier-proven' : 'tier-dev')}">${getInternationalStatus(candCaps)}</span>`,
-      delta: candCaps >= 12 ?
-        '<span class="delta-positive">Proven Senior Int\'l</span>' :
-        '<span class="delta-subtle">Emerging / Youth Talent</span>'
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.goals_per_90 || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
     }
-  ];
+  );
 
-  step2Rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.metric}</strong></td>
-      <td class="star-col">${r.starVal}</td>
-      <td class="cand-col">${r.candVal}</td>
-      <td style="font-family: var(--font-mono); font-size: 0.82rem;">${r.delta}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+  renderPlayerRow(
+    '🎯 Assists / 90 min',
+    `<strong>${activeStar.assists_per_90 || 0}</strong>`,
+    c => `<strong>${c.assists_per_90 || 0}</strong>`,
+    c => {
+      const diff = (c.assists_per_90 || 0) - (activeStar.assists_per_90 || 0);
+      return diff >= 0 ? `<span class="delta-positive">+${diff.toFixed(2)} A/90 Surplus</span>` : `<span class="delta-negative">${diff.toFixed(2)} A/90 Gap</span>`;
+    },
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.assists_per_90 || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
 
-  // ==========================================================================
-  // ⚡ STEP 3: LIKE-FOR-LIKE PER-90 PERFORMANCE & PERCENTILES
-  // ==========================================================================
-  const posGrp = activeStar.pos_group || 'CM';
-  const roleMetricsList = ROLE_METRICS_MAP[posGrp] || ROLE_METRICS_MAP['CM'];
+  renderPlayerRow(
+    '⚡ Combined G+A / 90 min',
+    `<strong>${activeStar.ga_per_90 || 0}</strong>`,
+    c => `<strong>${c.ga_per_90 || 0}</strong>`,
+    c => {
+      const diff = (c.ga_per_90 || 0) - (activeStar.ga_per_90 || 0);
+      return diff >= 0 ? `<span class="delta-positive">+${diff.toFixed(2)} G+A/90 Production Surge</span>` : `<span class="delta-neutral">${diff.toFixed(2)} G+A/90 Deficit</span>`;
+    },
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.ga_per_90 || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
 
+  renderPlayerRow(
+    '⏱️ Durability: Minutes / Appearance',
+    `${Math.round(activeStar.min_app || 75)} mins/app`,
+    c => `${Math.round(c.minutes_per_app || c.min_app || 70)} mins/app`,
+    c => (c.minutes_per_app || c.min_app || 70) >= 75 ? '<span class="delta-positive">90-Minute Endurance</span>' : '<span class="delta-neutral">Standard Starting Load</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.minutes_per_app || c.min_app || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
+
+  renderPlayerRow(
+    '🛡️ Disciplinary Stability (Yellow / Red)',
+    `${activeStar.total_yellows || 0}Y / ${activeStar.total_reds || 0}R`,
+    c => `${c.total_yellows !== undefined ? c.total_yellows : (c.yellows || 0)}Y / ${c.total_reds !== undefined ? c.total_reds : (c.reds || 0)}R`,
+    c => '<span class="delta-positive">Disciplined Profile</span>'
+  );
+
+  renderPlayerRow(
+    '🔥 Current Season Form (G+A / Mins)',
+    `${activeStar.season_goals || 0}G + ${activeStar.season_assists || 0}A in ${activeStar.season_minutes || 0}m`,
+    c => `${c.season_goals !== undefined ? c.season_goals : (c.s_goals || 0)}G + ${c.season_assists !== undefined ? c.season_assists : (c.s_assists || 0)}A in ${c.season_minutes !== undefined ? c.season_minutes : (c.s_mins || 0)}m`,
+    c => '<span class="delta-positive">In-Form Trajectory</span>'
+  );
+
+  // STEP 3: TACTICAL METRIC MAP (PROGRESSION & CONTROL)
   const step3Hdr = document.createElement('tr');
   step3Hdr.className = 'comp-step-row comp-step-3-hdr';
   step3Hdr.innerHTML = `
-    <td colspan="4">
+    <td colspan="${colSpanCount}">
       <div class="step-header-cell">
         <span class="step-hdr-badge badge-step-3">STEP 03</span>
-        <span class="step-hdr-title">COMPARE LIKE-FOR-LIKE PER-90 PERFORMANCE & PERCENTILES (${posGrp})</span>
-        <span class="step-hdr-sub">Positional metrics mapped against empirical European percentiles (0-99th)</span>
+        <span class="step-hdr-title">MAP PROGRESSIVE, CREATIVE & OFF-BALL INFLUENCE</span>
+        <span class="step-hdr-sub">Progressive carries, shot creation, pressing intensity, aerial duels & national caps</span>
       </div>
     </td>
   `;
   tbody.appendChild(step3Hdr);
 
-  // Render each position metric with value and visual percentile bar
-  roleMetricsList.forEach(m => {
-    const key = m.key;
-    const label = m.label;
-    const unit = m.unit;
+  renderPlayerRow(
+    '🚀 Progressive Passes / 90 min',
+    `${(activeStar.prog_passes_per_90 || 4.2).toFixed(1)}`,
+    c => `${(c.prog_passes_per_90 || 4.0).toFixed(1)}`,
+    c => '<span class="delta-positive">Forward Progression Engine</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.prog_passes_per_90 || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
 
-    const starPkg = (activeStar.role_metrics && activeStar.role_metrics[key]) || {};
-    const candPkg = (cand.role_metrics && cand.role_metrics[key]) || {};
+  renderPlayerRow(
+    '🎨 Shot-Creating Actions / 90',
+    `${(activeStar.sca_per_90 || 3.8).toFixed(1)}`,
+    c => `${(c.sca_per_90 || 3.5).toFixed(1)}`,
+    c => '<span class="delta-positive">Elite Creative Phasing</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.sca_per_90 || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
 
-    const starVal = starPkg.value !== undefined ? starPkg.value : (activeStar[key] || 0);
-    const starPct = starPkg.percentile !== undefined ? starPkg.percentile : (activeStar.role_percentiles && activeStar.role_percentiles[key] ? activeStar.role_percentiles[key] : 75);
+  renderPlayerRow(
+    '⚔️ Pressing & Defensive Actions / 90',
+    `${(activeStar.def_actions_per_90 || 5.1).toFixed(1)}`,
+    c => `${(c.def_actions_per_90 || 4.8).toFixed(1)}`,
+    c => '<span class="delta-positive">High-Intensity Out-of-Possession Work</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.def_actions_per_90 || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
 
-    const candVal = candPkg.value !== undefined ? candPkg.value : (cand[key] || 0);
-    const candPct = candPkg.percentile !== undefined ? candPkg.percentile : (cand.role_percentiles && cand.role_percentiles[key] ? cand.role_percentiles[key] : 70);
+  renderPlayerRow(
+    '🦅 Aerial Duel Success Rate %',
+    `${(activeStar.aerial_win_pct || 55.0).toFixed(1)}%`,
+    c => `${(c.aerial_win_pct || 52.0).toFixed(1)}%`,
+    c => '<span class="delta-neutral">Set-Piece Competitive</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.aerial_win_pct || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
 
-    const deltaNum = typeof candVal === 'number' && typeof starVal === 'number' ? (candVal - starVal).toFixed(2) : '--';
-    const deltaPct = candPct - starPct;
-    const deltaPctStr = deltaPct >= 0 ? `+${deltaPct}%ile` : `${deltaPct}%ile`;
+  renderPlayerRow(
+    '🌍 International Pedigree & Caps',
+    `${activeStar.country_of_citizenship || 'Unknown'} (${activeStar.international_caps || 0} caps, ${activeStar.international_goals || 0} goals)`,
+    c => `${c.country_of_citizenship || c.nat || 'Unknown'} (${c.international_caps !== undefined ? c.international_caps : (c.caps || 0)} caps, ${c.international_goals !== undefined ? c.international_goals : (c.int_goals || 0)} goals)`,
+    c => '<span class="delta-positive">Proven International Caliber</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.international_caps !== undefined ? c.international_caps : (c.caps || 0); if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <strong style="color: #fff;">${label}</strong>
-      </td>
-      <td class="star-col">
-        <div class="pct-cell-wrap">
-          <span class="pct-val-num">${typeof starVal === 'number' ? starVal : starVal}${unit}</span>
-          <div class="pct-bar-container">
-            <div class="pct-bar-bg"><div class="pct-bar-fill pct-bar-star" style="width: ${starPct}%;"></div></div>
-            <span class="pct-badge ${getPercentileClass(starPct)}">${starPct}th %ile</span>
-          </div>
-        </div>
-      </td>
-      <td class="cand-col">
-        <div class="pct-cell-wrap">
-          <span class="pct-val-num">${typeof candVal === 'number' ? candVal : candVal}${unit}</span>
-          <div class="pct-bar-container">
-            <div class="pct-bar-bg"><div class="pct-bar-fill pct-bar-cand" style="width: ${candPct}%;"></div></div>
-            <span class="pct-badge ${getPercentileClass(candPct)}">${candPct}th %ile</span>
-          </div>
-        </div>
-      </td>
-      <td style="font-family: var(--font-mono); font-size: 0.85rem;">
-        <span style="color: ${deltaNum >= 0 ? '#10b981' : '#f43f5e'}; font-weight: 700;">${deltaNum > 0 ? '+' : ''}${deltaNum}${unit}</span>
-        <span style="color: var(--text-muted); margin-left: 0.35rem; font-size: 0.75rem;">(${deltaPctStr})</span>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // ==========================================================================
-  // 🎯 STEP 4: RANK POTENTIAL REPLACEMENTS & ARBITRAGE DOSSIER
-  // ==========================================================================
+  // STEP 4: FINANCIAL ARBITRAGE & COMPOSITE FIT
   const step4Hdr = document.createElement('tr');
   step4Hdr.className = 'comp-step-row comp-step-4-hdr';
   step4Hdr.innerHTML = `
-    <td colspan="4">
+    <td colspan="${colSpanCount}">
       <div class="step-header-cell">
         <span class="step-hdr-badge badge-step-4">STEP 04</span>
-        <span class="step-hdr-title">RANK POTENTIAL REPLACEMENTS & ARBITRAGE DOSSIER</span>
-        <span class="step-hdr-sub">Multi-factor weighted scoring, valuation arbitrage, agency & payroll relief</span>
+        <span class="step-hdr-title">RANK CANDIDATES: WEIGHTED TACTICAL & FINANCIAL FIT</span>
+        <span class="step-hdr-sub">Composite formula (42% tactical, 20% system, 20% financial, 15% growth, 3% caps) & arbitrage</span>
       </div>
     </td>
   `;
   tbody.appendChild(step4Hdr);
 
-  const step4Rows = [
-    {
-      metric: '🎯 Composite Match Score',
-      starVal: '<span style="font-family: var(--font-mono); font-weight: 800; color: var(--accent-cyan);">100.0% (Benchmark)</span>',
-      candVal: `<span class="score-highlight">${cand.composite_match_score}% Match</span>`,
-      delta: `<span class="delta-positive">${getMatchTierBadge(cand.composite_match_score)}</span>`
-    },
-    {
-      metric: '⚡ Tactical Role Fit (42% Weight)',
-      starVal: '100.0%',
-      candVal: `${cand.tactical_similarity_score}%`,
-      delta: cand.tactical_similarity_score >= 85 ?
-        '<span class="delta-positive">✓ Elite Role Match</span>' :
-        '<span class="delta-neutral">High Role Affinity</span>'
-    },
-    {
-      metric: '📐 Formation Compatibility (20% Weight)',
-      starVal: '100.0%',
-      candVal: `${cand.formation_compatibility_score}%`,
-      delta: '<span class="delta-neutral">System Fluid</span>'
-    },
-    {
-      metric: '💰 Financial Feasibility (20% Weight)',
-      starVal: 'Reference Fee',
-      candVal: `${cand.financial_feasibility_score}%`,
-      delta: cand.financial_feasibility_score >= 85 ?
-        '<span class="delta-positive">✓ Highly Feasible Fee</span>' :
-        '<span class="delta-neutral">Viable Window</span>'
-    },
-    {
-      metric: '🚀 Youth Growth & Headroom (15% Weight)',
-      starVal: `${activeStar.age} yrs old`,
-      candVal: `${cand.age} yrs old (${cand.growth_potential_score}% Growth)`,
-      delta: ageDiff > 0 ?
-        `<span class="delta-positive">+${ageDiff} yrs Longevity Headroom</span>` :
-        `<span class="delta-neutral">${Math.abs(ageDiff)} yrs older</span>`
-    },
-    {
-      metric: '💎 Market Valuation & Arbitrage Savings',
-      starVal: formatCurrency(starFee),
-      candVal: formatCurrency(candVal),
-      delta: `<span class="delta-positive">+${formatCurrency(candSavingsEur)} (${candSavingsPct}% Saved)</span>`
-    },
-    {
-      metric: '👔 Player Agent / Agency',
-      starVal: activeStar.agent_name || 'Family / Direct',
-      candVal: cand.agent_name || 'Family / Direct',
-      delta: activeStar.agent_name === cand.agent_name ?
-        '<span class="delta-positive">✓ Shared Agency Pipeline</span>' :
-        '<span class="delta-neutral">Independent Agency</span>'
-    },
-    {
-      metric: '📄 Contract Status & Expiration',
-      starVal: activeStar.contract_status || 'Active Contract',
-      candVal: `${cand.contract_status || 'Active Contract'} (${cand.contract_expiration_date || 'Rolling'})`,
-      delta: (cand.contract_status && cand.contract_status.includes('Expiry')) ?
-        '<span class="delta-leverage">⚠️ Contract Expiry Leverage</span>' :
-        '<span class="delta-neutral">Active Contract</span>'
-    },
-    {
-      metric: '💵 Estimated Weekly Wage & Relief',
-      starVal: `${formatCurrency(starWkWage)} / wk`,
-      candVal: `${formatCurrency(candWkWage)} / wk`,
-      delta: wkWageDelta >= 0 ?
-        `<span class="delta-positive">+${formatCurrency(wkWageDelta)}/wk Relief</span>` :
-        `<span class="delta-negative">-${formatCurrency(Math.abs(wkWageDelta))}/wk Surge</span>`
-    },
-    {
-      metric: '💼 Annual Payroll Burden & Relief',
-      starVal: `${formatCurrency(starYrWage)} / yr`,
-      candVal: `${formatCurrency(candYrWage)} / yr`,
-      delta: yrWageDelta >= 0 ?
-        `<span class="delta-positive">+${formatCurrency(yrWageDelta)}/yr Payroll Relief</span>` :
-        `<span class="delta-negative">-${formatCurrency(Math.abs(yrWageDelta))}/yr Delta</span>`
-    },
-    {
-      metric: '⏳ Succession Urgency & Recommendation',
-      starVal: activeStar.is_succession_case ? 'Future Horizon Void' : 'Post-Departure Void',
-      candVal: cand.composite_match_score >= 88 ? 'Immediate Drop-In Starter' : 'High-Potential Rotation',
-      delta: '<span class="delta-positive">Actionable Profile</span>'
+  renderPlayerRow(
+    '🏆 Composite Drop-In Score',
+    '100.0% Benchmark',
+    c => `<strong>${c.composite_match_score}% Match</strong>`,
+    c => c.composite_match_score >= 88 ? '<span class="delta-positive">✓ Tier 1 Priority Target</span>' : '<span class="delta-neutral">Tier 2 Strategic Alternative</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.composite_match_score || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
     }
-  ];
+  );
 
-  step4Rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.metric}</strong></td>
-      <td class="star-col">${r.starVal}</td>
-      <td class="cand-col">${r.candVal}</td>
-      <td style="font-family: var(--font-mono); font-size: 0.82rem;">${r.delta}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+  renderPlayerRow(
+    '⚡ Tactical Role Fit (42% Weight)',
+    '100.0%',
+    c => `${c.tactical_similarity_score || 85}%`,
+    c => (c.tactical_similarity_score || 85) >= 85 ? '<span class="delta-positive">✓ Elite Role Match</span>' : '<span class="delta-neutral">High Role Affinity</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.tactical_similarity_score || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
+
+  renderPlayerRow(
+    '📐 Formation Compatibility (20% Weight)',
+    '100.0%',
+    c => `${c.formation_compatibility_score || 88}%`,
+    c => '<span class="delta-neutral">System Fluid</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.formation_compatibility_score || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
+
+  renderPlayerRow(
+    '💰 Financial Feasibility (20% Weight)',
+    'Reference Fee',
+    c => `${c.financial_feasibility_score || 86}%`,
+    c => (c.financial_feasibility_score || 86) >= 85 ? '<span class="delta-positive">✓ Highly Feasible Fee</span>' : '<span class="delta-neutral">Viable Window</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => { const val = c.financial_feasibility_score || 0; if (val > maxVal) { maxVal = val; best = i; } });
+      return best;
+    }
+  );
+
+  renderPlayerRow(
+    '🚀 Youth Growth & Headroom (15% Weight)',
+    `${activeStar.age} yrs old`,
+    c => `${c.age} yrs old (${c.growth_potential_score || 82}% Growth)`,
+    c => {
+      const diff = (activeStar.age || 26) - (c.age || 22);
+      return diff > 0 ? `<span class="delta-positive">+${diff} yrs Longevity Headroom</span>` : `<span class="delta-neutral">${Math.abs(diff)} yrs older</span>`;
+    },
+    list => {
+      let minVal = 999, best = 0;
+      list.forEach((c, i) => { const val = c.age || 99; if (val < minVal) { minVal = val; best = i; } });
+      return best;
+    }
+  );
+
+  renderPlayerRow(
+    '💎 Market Valuation & Arbitrage Savings',
+    formatCurrency(activeStar.fee || 50_000_000),
+    c => {
+      const starFee = activeStar.fee || 50_000_000;
+      const candVal = c.market_value_in_eur !== undefined ? c.market_value_in_eur : (c.val || 0);
+      const savings = c.savings_eur !== undefined ? c.savings_eur : Math.max(0, starFee - candVal);
+      return `${formatCurrency(candVal)} <div style="font-size:0.75rem; color:#6ee7b7;">Saves ${formatCurrency(savings)}</div>`;
+    },
+    c => '<span class="delta-positive">Capital Arbitrage</span>',
+    list => {
+      let maxVal = -1, best = 0;
+      list.forEach((c, i) => {
+        const starFee = activeStar.fee || 50_000_000;
+        const candVal = c.market_value_in_eur !== undefined ? c.market_value_in_eur : (c.val || 0);
+        const savings = c.savings_eur !== undefined ? c.savings_eur : Math.max(0, starFee - candVal);
+        if (savings > maxVal) { maxVal = savings; best = i; }
+      });
+      return best;
+    }
+  );
+
+  renderPlayerRow(
+    '👔 Player Agent / Agency',
+    activeStar.agent_name || 'Family / Direct',
+    c => c.agent_name || 'Family / Direct',
+    c => (c.agent_name && c.agent_name === activeStar.agent_name) ? '<span class="delta-positive">✓ Shared Agency Pipeline</span>' : '<span class="delta-neutral">Independent Agency</span>'
+  );
+
+  renderPlayerRow(
+    '📄 Contract Status & Expiration',
+    activeStar.contract_status || 'Active Contract',
+    c => `${c.contract_status || 'Active Contract'} (${c.contract_expiration_date || 'Rolling'})`,
+    c => (c.contract_status && c.contract_status.includes('Expiry')) ? '<span class="delta-leverage">⚠️ Contract Expiry Leverage</span>' : '<span class="delta-neutral">Active Contract</span>'
+  );
+
+  renderPlayerRow(
+    '💵 Estimated Weekly Wage & Relief',
+    `${formatCurrency(activeStar.wage_weekly_eur || 150000)} / wk`,
+    c => `${formatCurrency(c.wage_weekly_eur || c.wage_wk || 25000)} / wk`,
+    c => {
+      const savings = (activeStar.wage_weekly_eur || 150000) - (c.wage_weekly_eur || c.wage_wk || 25000);
+      return savings >= 0 ? `<span class="delta-positive">+${formatCurrency(savings)}/wk Relief</span>` : `<span class="delta-negative">-${formatCurrency(Math.abs(savings))}/wk Surge</span>`;
+    },
+    list => {
+      let minVal = 999_999_999, best = 0;
+      list.forEach((c, i) => { const val = c.wage_weekly_eur || c.wage_wk || 0; if (val < minVal) { minVal = val; best = i; } });
+      return best;
+    }
+  );
+
+  renderPlayerRow(
+    '💼 Annual Payroll Burden & Relief',
+    `${formatCurrency(activeStar.wage_annual_eur || (activeStar.wage_weekly_eur ? activeStar.wage_weekly_eur * 52 : 7800000))} / yr`,
+    c => `${formatCurrency(c.wage_annual_eur || (c.wage_weekly_eur ? c.wage_weekly_eur * 52 : 1300000))} / yr`,
+    c => {
+      const starYr = activeStar.wage_annual_eur || 7800000;
+      const candYr = c.wage_annual_eur || 1300000;
+      const savings = starYr - candYr;
+      return savings >= 0 ? `<span class="delta-positive">+${formatCurrency(savings)}/yr Relief</span>` : `<span class="delta-negative">-${formatCurrency(Math.abs(savings))}/yr Surge</span>`;
+    },
+    list => {
+      let minVal = 999_999_999, best = 0;
+      list.forEach((c, i) => { const val = c.wage_annual_eur || 0; if (val < minVal) { minVal = val; best = i; } });
+      return best;
+    }
+  );
+
+  renderPlayerRow(
+    '⏳ Succession Urgency & Recommendation',
+    activeStar.is_succession_case ? 'Future Horizon Void' : 'Post-Departure Void',
+    c => c.composite_match_score >= 88 ? 'Immediate Drop-In Starter' : 'High-Potential Rotation',
+    c => '<span class="delta-positive">Actionable Profile</span>'
+  );
 }
+
 
 // Canvas-based Role-Adaptive Radar Chart
 function drawRadarChart() {
@@ -3052,26 +3365,48 @@ function drawRadarChart() {
       ctx.fillText(axes[i], labelX, labelY);
     }
 
-    // 3. Star Vector using empirical percentiles
+    // 3. Star Vector using empirical percentiles (Cyan Benchmark)
     const starVector = COACH_RADAR_AXES.map(m => {
       const pct = (activeStar.radar_percentiles && activeStar.radar_percentiles[m.key] !== undefined) ?
         activeStar.radar_percentiles[m.key] : 75;
       return Math.max(0.15, Math.min(1.0, pct / 100.0));
     });
-    drawPolygon(ctx, centerX, centerY, radius, angleStep, starVector, 'rgba(6, 182, 212, 0.25)', '#06b6d4');
+    drawPolygon(ctx, centerX, centerY, radius, angleStep, starVector, 'rgba(6, 182, 212, 0.22)', '#06b6d4', 2.5);
 
-    // 4. Candidate Vector using empirical percentiles
-    if (cand) {
+    // 4. Multi-Candidate Manager Polygons (Slots 1, 2, 3)
+    const activeCoachList = (multiComparisonCoachCandidates && multiComparisonCoachCandidates.length) ?
+      multiComparisonCoachCandidates : (cand ? [cand] : []);
+
+    activeCoachList.slice(0, 3).forEach((c, idx) => {
+      const color = MULTI_CANDIDATE_COLORS[idx] || MULTI_CANDIDATE_COLORS[0];
       const candVector = COACH_RADAR_AXES.map(m => {
-        const pct = (cand.radar_percentiles && cand.radar_percentiles[m.key] !== undefined) ?
-          cand.radar_percentiles[m.key] : 70;
+        const pct = (c.radar_percentiles && c.radar_percentiles[m.key] !== undefined) ?
+          c.radar_percentiles[m.key] : 70;
         return Math.max(0.15, Math.min(1.0, pct / 100.0));
       });
-      drawPolygon(ctx, centerX, centerY, radius, angleStep, candVector, 'rgba(139, 92, 246, 0.35)', '#8b5cf6');
+      drawPolygon(ctx, centerX, centerY, radius, angleStep, candVector, color.fill, color.stroke, idx === 0 ? 2.5 : 2);
+    });
+
+    // 5. Dynamic Radar Legend
+    const legend = document.getElementById('radarLegend');
+    if (legend) {
+      let html = `<div class="legend-item"><span class="legend-dot legend-star"></span><span id="legendStarName">${activeStar.name}</span> <span class="legend-role-tag">(Benchmark)</span></div>`;
+      activeCoachList.slice(0, 3).forEach((c, idx) => {
+        const color = MULTI_CANDIDATE_COLORS[idx];
+        html += `
+          <div class="legend-item">
+            <span class="legend-dot" style="background: ${color.stroke}; box-shadow: 0 0 8px ${color.stroke};"></span>
+            <span ${idx === 0 ? 'id="legendCandName"' : ''} style="color: ${color.stroke}; font-weight: 700;">${c.name}</span>
+            <span class="legend-slot-tag slot-${idx + 1}">Slot ${idx + 1}${idx === 0 ? ' • Primary' : ''}</span>
+          </div>
+        `;
+      });
+      legend.innerHTML = html;
     }
     return;
   }
 
+  // Player Radar
   const activeStar = getActiveStarData();
   const cand = currentCandidate;
   if (!activeStar) return;
@@ -3122,29 +3457,47 @@ function drawRadarChart() {
     ctx.fillText(axes[i], labelX, labelY);
   }
 
-  // 3. Star Vector using empirical percentiles
+  // 3. Star Vector using empirical percentiles (Cyan Benchmark)
   const starVector = roleMetrics.map(m => {
     const pct = (activeStar.role_percentiles && activeStar.role_percentiles[m.key] !== undefined) ?
       activeStar.role_percentiles[m.key] : 75;
     return Math.max(0.15, Math.min(1.0, pct / 100.0));
   });
+  drawPolygon(ctx, centerX, centerY, radius, angleStep, starVector, 'rgba(6, 182, 212, 0.22)', '#06b6d4', 2.5);
 
-  // Draw Star Polygon (Cyan)
-  drawPolygon(ctx, centerX, centerY, radius, angleStep, starVector, 'rgba(6, 182, 212, 0.25)', '#06b6d4');
+  // 4. Multi-Candidate Player Polygons (Slots 1, 2, 3)
+  const activeCandList = (multiComparisonCandidates && multiComparisonCandidates.length) ?
+    multiComparisonCandidates : (cand ? [cand] : []);
 
-  // 4. Candidate Vector using empirical percentiles
-  if (cand) {
+  activeCandList.slice(0, 3).forEach((c, idx) => {
+    const color = MULTI_CANDIDATE_COLORS[idx] || MULTI_CANDIDATE_COLORS[0];
     const candVector = roleMetrics.map(m => {
-      const pct = (cand.role_percentiles && cand.role_percentiles[m.key] !== undefined) ?
-        cand.role_percentiles[m.key] : 70;
+      const pct = (c.role_percentiles && c.role_percentiles[m.key] !== undefined) ?
+        c.role_percentiles[m.key] : 70;
       return Math.max(0.15, Math.min(1.0, pct / 100.0));
     });
-    // Draw Candidate Polygon (Purple)
-    drawPolygon(ctx, centerX, centerY, radius, angleStep, candVector, 'rgba(139, 92, 246, 0.35)', '#8b5cf6');
+    drawPolygon(ctx, centerX, centerY, radius, angleStep, candVector, color.fill, color.stroke, idx === 0 ? 2.5 : 2);
+  });
+
+  // 5. Dynamic Radar Legend
+  const legend = document.getElementById('radarLegend');
+  if (legend) {
+    let html = `<div class="legend-item"><span class="legend-dot legend-star"></span><span id="legendStarName">${activeStar.name}</span> <span class="legend-role-tag">(Departed Benchmark)</span></div>`;
+    activeCandList.slice(0, 3).forEach((c, idx) => {
+      const color = MULTI_CANDIDATE_COLORS[idx];
+      html += `
+        <div class="legend-item">
+          <span class="legend-dot" style="background: ${color.stroke}; box-shadow: 0 0 8px ${color.stroke};"></span>
+          <span ${idx === 0 ? 'id="legendCandName"' : ''} style="color: ${color.stroke}; font-weight: 700;">${c.name}</span>
+          <span class="legend-slot-tag slot-${idx + 1}">Slot ${idx + 1}${idx === 0 ? ' • Primary' : ''}</span>
+        </div>
+      `;
+    });
+    legend.innerHTML = html;
   }
 }
 
-function drawPolygon(ctx, centerX, centerY, radius, angleStep, values, fillColor, strokeColor) {
+function drawPolygon(ctx, centerX, centerY, radius, angleStep, values, fillColor, strokeColor, lineWidth = 2) {
   ctx.beginPath();
   for (let i = 0; i < values.length; i++) {
     const val = Math.max(0.15, Math.min(1.0, values[i]));
@@ -3159,9 +3512,10 @@ function drawPolygon(ctx, centerX, centerY, radius, angleStep, values, fillColor
   ctx.fillStyle = fillColor;
   ctx.fill();
   ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = lineWidth;
   ctx.stroke();
 
+  // Draw node points
   for (let i = 0; i < values.length; i++) {
     const val = Math.max(0.15, Math.min(1.0, values[i]));
     const r = radius * val;
@@ -3169,12 +3523,11 @@ function drawPolygon(ctx, centerX, centerY, radius, angleStep, values, fillColor
     const x = centerX + r * Math.cos(angle);
     const y = centerY + r * Math.sin(angle);
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
     ctx.fillStyle = strokeColor;
     ctx.fill();
   }
 }
-
 // Setup Scatter Plot Listeners & Mode Toggle
 let currentScatterPoints = [];
 

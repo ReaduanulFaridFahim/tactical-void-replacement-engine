@@ -537,6 +537,7 @@
       </div>
 
       <!-- Face-off Photos Banner -->
+      <!-- Interactive Face-off Banner (1-on-1 or 3-Way Multi-Faceoff) -->
       <div class="faceoff-banner" id="faceoffBanner">
         <div class="faceoff-player star-side">
           <div class="faceoff-avatar-wrap">
@@ -550,21 +551,41 @@
           </div>
         </div>
 
-        <div class="faceoff-vs-badge">
-          <span class="vs-text">⚡ VS ⚡</span>
+        <div class="faceoff-vs-badge" id="faceoffVsBadge">
+          <span class="vs-text" id="faceoffVsText">⚡ VS ⚡</span>
           <span class="vs-match-index" id="faceoffMatchScore">94.8% Match</span>
         </div>
 
-        <div class="faceoff-player cand-side">
-          <div class="faceoff-info" style="text-align: right;">
-            <div class="faceoff-tag" style="color: var(--accent-purple);">Target Drop-In Candidate</div>
-            <div class="faceoff-name" id="faceoffCandName">Selected Candidate</div>
-            <div class="faceoff-sub" id="faceoffCandClub">Scouted Club</div>
+        <div class="faceoff-candidates-container" id="faceoffCandidatesContainer">
+          <div class="faceoff-player cand-side">
+            <div class="faceoff-info" style="text-align: right;">
+              <div class="faceoff-tag" style="color: var(--accent-purple);">Target Drop-In Candidate</div>
+              <div class="faceoff-name" id="faceoffCandName">Selected Candidate</div>
+              <div class="faceoff-sub" id="faceoffCandClub">Scouted Club</div>
+            </div>
+            <div class="faceoff-avatar-wrap">
+              <img id="faceoffCandImg" class="faceoff-photo" src="" alt="Candidate" style="display: none;" onerror="this.style.display='none'; document.getElementById('faceoffCandInitials').style.display='flex';" />
+              <div id="faceoffCandInitials" class="faceoff-initials" style="background: linear-gradient(135deg, var(--accent-purple), #ec4899);">SC</div>
+            </div>
           </div>
-          <div class="faceoff-avatar-wrap">
-            <img id="faceoffCandImg" class="faceoff-photo" src="" alt="Candidate" style="display: none;" onerror="this.style.display='none'; document.getElementById('faceoffCandInitials').style.display='flex';" />
-            <div id="faceoffCandInitials" class="faceoff-initials" style="background: linear-gradient(135deg, var(--accent-purple), #ec4899);">SC</div>
+        </div>
+      </div>
+
+      <!-- 3-Way Multi-Candidate Faceoff Control Toolbar -->
+      <div class="multi-compare-toolbar" id="multiCompareToolbar">
+        <div class="multi-toolbar-left">
+          <span class="multi-toolbar-lbl">🎯 Multi-Radar Faceoff Cohort:</span>
+          <div class="multi-slots-summary" id="multiSlotsSummary">
+            <!-- Dynamically populated candidate slot chips -->
           </div>
+        </div>
+        <div class="multi-actions-btns">
+          <button class="multi-action-btn" id="btnAutoTop3" title="Instantly load the top 3 drop-in replacements into the 3-way radar faceoff">
+            ⚡ Compare Top 3 Auto
+          </button>
+          <button class="multi-action-btn multi-action-btn-ghost" id="btnResetSingle" title="Reset comparison to single primary candidate">
+            ✕ Reset to 1-on-1
+          </button>
         </div>
       </div>
 
@@ -584,27 +605,23 @@
         <!-- Radar Canvas -->
         <div class="radar-canvas-wrap">
           <canvas id="radarCanvas" width="380" height="380"></canvas>
-          <div class="radar-legend">
-            <div class="legend-item">
-              <span class="legend-color-dot legend-star"></span>
-              <span id="legendStarName">Departed Star</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-color-dot legend-cand"></span>
-              <span id="legendCandName">Selected Candidate</span>
-            </div>
+          <div class="radar-legend" id="radarLegend">
+            <!-- Rendered dynamically via JavaScript; fallbacks provided for static audit -->
+            <div class="legend-item"><span class="legend-dot legend-star"></span><span id="legendStarName">Departed Star</span></div>
+            <div class="legend-item"><span class="legend-dot legend-cand"></span><span id="legendCandName">Target Candidate</span></div>
           </div>
         </div>
 
         <!-- Comparative Metrics Table -->
         <div class="comparison-table-wrap">
-          <table class="comp-table">
-            <thead>
+          <table class="comp-table" id="compTable">
+            <thead id="compTableHead">
+              <!-- Dynamically populated multi-candidate columns; fallback row provided -->
               <tr>
-                <th>Tactical Metric</th>
-                <th id="thStarName">Departed Star</th>
-                <th id="thCandName">Candidate</th>
-                <th>Tactical Delta</th>
+                <th>Tactical Metric / Dimension</th>
+                <th class="star-col" id="thStarName">Departed Star</th>
+                <th class="cand-col" id="thCandName">Target Candidate</th>
+                <th class="summary-col">Cohort Analysis & Edge</th>
               </tr>
             </thead>
             <tbody id="compTableBody">

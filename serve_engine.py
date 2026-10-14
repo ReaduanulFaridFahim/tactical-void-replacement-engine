@@ -14,7 +14,7 @@ import socket
 import webbrowser
 import numpy as np
 import pandas as pd
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -362,7 +362,7 @@ def run():
     load_ml_models()
     port = find_free_port()
     server_address = ('127.0.0.1', port)
-    httpd = HTTPServer(server_address, EngineHandler)
+    httpd = ThreadingHTTPServer(server_address, EngineHandler)
     url = f"http://127.0.0.1:{port}/"
     print("=" * 70)
     print("⚽ TACTICAL VOID ENGINE: LIVE ML INFERENCE & WEB SERVER")

@@ -24,8 +24,8 @@
   --accent-rose: #f43f5e;
 
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
 
   --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
@@ -44,6 +44,11 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 75px;
 }
 
 body {
@@ -4842,6 +4847,234 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   EXECUTIVE QUICK-JUMP STICKY COMMAND DOCK
+   ========================================================================== */
+
+.executive-nav-dock {
+  position: sticky;
+  top: 0;
+  z-index: 990;
+  width: 100%;
+  background: rgba(11, 17, 32, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 1.5rem;
+}
+
+.dock-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.55rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dock-nav-items {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.15rem 0;
+}
+
+.dock-nav-items::-webkit-scrollbar {
+  display: none;
+}
+
+.dock-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.8rem;
+  border-radius: 9999px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dock-link:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.dock-link.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.28), rgba(139, 92, 246, 0.28));
+  border-color: rgba(6, 182, 212, 0.55);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.3);
+}
+
+.dock-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.dock-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.dock-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.dock-action-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(6, 182, 212, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+#btnDockAutoTop3 {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(6, 182, 212, 0.18));
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #c4b5fd;
+}
+
+#btnDockAutoTop3:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.3));
+  border-color: var(--accent-cyan);
+  color: #fff;
+}
+
+/* ==========================================================================
+   1-CLICK EXECUTIVE ML SCENARIO PRESETS
+   ========================================================================== */
+
+.ml-presets-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.95rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ml-presets-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ml-presets-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ml-preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 0.77rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ml-preset-chip:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.ml-preset-chip.active {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: var(--accent-cyan);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+}
+
+.preset-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.preset-indicator.moderate {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.preset-indicator.talisman {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+.preset-indicator.crisis {
+  background: #f43f5e;
+  box-shadow: 0 0 6px #f43f5e;
+}
+
+/* ==========================================================================
+   RESPONSIVE POLISH & ERGONOMICS
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .dock-container {
+    padding: 0.5rem 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dock-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .dock-quick-actions {
+    justify-content: flex-end;
+  }
+  .dock-action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .ml-preset-chip {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
 
 
 

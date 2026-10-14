@@ -169,6 +169,7 @@ async function initApp() {
     }
 
     setupEventListeners();
+    setupExecutiveDock();
     setupSearchAutocomplete();
     setupCustomCandidateSearch();
     setupScatterPlotListeners();
@@ -422,6 +423,156 @@ function setupMlInferenceControls() {
     resetBtn.addEventListener('click', () => {
       syncMlSlidersWithActiveStar();
       showToast('Reset sensitivity controls to benchmark star data');
+    });
+  }
+
+  setupMlPresets();
+}
+
+// -----------------------------------------------------------------------------
+// 1-CLICK EXECUTIVE ML SCENARIO PRESETS
+// -----------------------------------------------------------------------------
+function setupMlPresets() {
+  const presets = [
+    { id: 'presetModerate', name: 'Standard Rotation', fee: 40, ppg: 1.85, mins: 65, goal: 12 },
+    { id: 'presetTalisman', name: 'Talisman Shock', fee: 100, ppg: 2.14, mins: 85, goal: 20 },
+    { id: 'presetCrisis', name: 'Generational Crisis', fee: 160, ppg: 2.45, mins: 95, goal: 38 }
+  ];
+
+  presets.forEach(p => {
+    const btn = document.getElementById(p.id);
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+      presets.forEach(item => {
+        const otherBtn = document.getElementById(item.id);
+        if (otherBtn) otherBtn.classList.remove('active');
+      });
+      btn.classList.add('active');
+
+      const feeSlider = document.getElementById('mlFeeSlider');
+      const feeVal = document.getElementById('mlFeeSliderVal');
+      if (feeSlider && feeVal) {
+        feeSlider.value = p.fee;
+        feeVal.textContent = `€${p.fee}M`;
+      }
+
+      const ppgSlider = document.getElementById('mlPpgSlider');
+      const ppgVal = document.getElementById('mlPpgSliderVal');
+      if (ppgSlider && ppgVal) {
+        ppgSlider.value = p.ppg.toFixed(2);
+        ppgVal.textContent = `${p.ppg.toFixed(2)} PPG`;
+      }
+
+      const minsSlider = document.getElementById('mlMinsSlider');
+      const minsVal = document.getElementById('mlMinsSliderVal');
+      if (minsSlider && minsVal) {
+        minsSlider.value = p.mins;
+        minsVal.textContent = `${p.mins}%`;
+      }
+
+      const goalSlider = document.getElementById('mlGoalShareSlider');
+      const goalVal = document.getElementById('mlGoalShareSliderVal');
+      if (goalSlider && goalVal) {
+        goalSlider.value = p.goal;
+        goalVal.textContent = `${p.goal}%`;
+      }
+
+      executeLiveMlPrediction();
+      showToast(`⚡ Activated ${p.name} preset: €${p.fee}M, ${p.ppg} PPG`);
+    });
+  });
+}
+
+// -----------------------------------------------------------------------------
+// EXECUTIVE QUICK-JUMP STICKY COMMAND DOCK
+// -----------------------------------------------------------------------------
+function setupExecutiveDock() {
+  const dock = document.getElementById('executiveNavDock');
+  if (!dock) return;
+
+  const links = dock.querySelectorAll('.dock-link');
+  const targetMap = [
+    { linkId: 'dockLinkVoid', targetId: 'voidAnalysisCard' },
+    { linkId: 'dockLinkPitch', targetId: 'pitchTacticalSection' },
+    { linkId: 'dockLinkMl', targetId: 'liveMlPredictionSection' },
+    { linkId: 'dockLinkScatter', targetId: 'scatterSection' },
+    { linkId: 'dockLinkRadar', targetId: 'radarWorkbenchSection' },
+    { linkId: 'dockLinkFfp', targetId: 'ffpSection' },
+    { linkId: 'dockLinkCandidates', targetId: 'replacementsSection' },
+    { linkId: 'dockLinkMethod', targetId: 'frameworkCard' }
+  ];
+
+  // Smooth scroll click handler
+  links.forEach(link => {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          links.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+        }
+      }
+    });
+  });
+
+  // IntersectionObserver to highlight active dock link on scroll
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          const match = targetMap.find(m => m.targetId === id);
+          if (match) {
+            links.forEach(l => l.classList.remove('active'));
+            const activeLink = document.getElementById(match.linkId);
+            if (activeLink) {
+              activeLink.classList.add('active');
+              activeLink.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+            }
+          }
+        }
+      });
+    }, {
+      rootMargin: '-20% 0px -60% 0px',
+      threshold: 0.1
+    });
+
+    targetMap.forEach(m => {
+      const el = document.getElementById(m.targetId);
+      if (el) observer.observe(el);
+    });
+  }
+
+  // Quick Action Buttons in Dock
+  const btnDockTop3 = document.getElementById('btnDockAutoTop3');
+  if (btnDockTop3) {
+    btnDockTop3.addEventListener('click', () => {
+      setTop3MultiCompare();
+      const radarSec = document.getElementById('radarWorkbenchSection');
+      if (radarSec) {
+        radarSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      showToast('⚡ Auto-selected Top 3 candidates in 3-Way Radar Faceoff!');
+    });
+  }
+
+  const btnDockExport = document.getElementById('btnDockExport');
+  if (btnDockExport) {
+    btnDockExport.addEventListener('click', () => {
+      const mainExportBtn = document.getElementById('btnExportDossier');
+      if (mainExportBtn) mainExportBtn.click();
+    });
+  }
+
+  const btnDockShare = document.getElementById('btnDockShare');
+  if (btnDockShare) {
+    btnDockShare.addEventListener('click', () => {
+      const mainShareBtn = document.getElementById('btnShareFaceoff');
+      if (mainShareBtn) mainShareBtn.click();
     });
   }
 }

@@ -53,6 +53,57 @@
       </div>
     </header>
 
+    <!-- Executive Quick-Jump Sticky Command Dock -->
+    <nav class="executive-nav-dock" id="executiveNavDock" aria-label="Executive Quick Navigation Dock">
+      <div class="dock-container">
+        <div class="dock-nav-items">
+          <a href="#voidAnalysisCard" class="dock-link active" id="dockLinkVoid" title="Jump to Tactical Void Severity & Star Benchmark">
+            <span class="dock-icon">📉</span>
+            <span class="dock-text">Void & Baseline</span>
+          </a>
+          <a href="#pitchTacticalSection" class="dock-link" id="dockLinkPitch" title="Jump to Interactive 2D Pitch Lineup & Tactical Board">
+            <span class="dock-icon">⚽</span>
+            <span class="dock-text">2D Pitch Lineup</span>
+          </a>
+          <a href="#liveMlPredictionSection" class="dock-link" id="dockLinkMl" title="Jump to Machine Learning Post-Departure Shock Predictor">
+            <span class="dock-icon">⚡</span>
+            <span class="dock-text">ML Shock Predictor</span>
+          </a>
+          <a href="#scatterSection" class="dock-link" id="dockLinkScatter" title="Jump to Tactical Profile Scatter & Similarity Cluster">
+            <span class="dock-icon">📊</span>
+            <span class="dock-text">Tactical Scatter</span>
+          </a>
+          <a href="#radarWorkbenchSection" class="dock-link" id="dockLinkRadar" title="Jump to Head-to-Head & 3-Way Radar Faceoff">
+            <span class="dock-icon">🕸️</span>
+            <span class="dock-text">3-Way Radar</span>
+          </a>
+          <a href="#ffpSection" class="dock-link" id="dockLinkFfp" title="Jump to UEFA FFP & PL PSR Financial Amortization Audit">
+            <span class="dock-icon">💰</span>
+            <span class="dock-text">FFP & PSR Audit</span>
+          </a>
+          <a href="#replacementsSection" class="dock-link" id="dockLinkCandidates" title="Jump to Scouted Drop-In Replacements">
+            <span class="dock-icon">🎯</span>
+            <span class="dock-text">Candidates</span>
+          </a>
+          <a href="#frameworkCard" class="dock-link" id="dockLinkMethod" title="Jump to Mathematical Vector Similarity Methodology">
+            <span class="dock-icon">📐</span>
+            <span class="dock-text">Methodology</span>
+          </a>
+        </div>
+        <div class="dock-quick-actions">
+          <button class="dock-action-btn" id="btnDockAutoTop3" title="Instantly load Top 3 scouted replacements into the 3-Way Radar">
+            <span>⚡ Auto Top-3</span>
+          </button>
+          <button class="dock-action-btn" id="btnDockExport" title="Quickly generate and export PDF Scouting Dossier">
+            <span>📄 Dossier</span>
+          </button>
+          <button class="dock-action-btn" id="btnDockShare" title="Copy tactical faceoff link">
+            <span>🔗 Share</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
     <!-- Search & Horizon Planning Control Bar -->
     <div class="player-search-wrap">
       <div class="search-input-box">
@@ -405,6 +456,25 @@
             </div>
           </div>
 
+          <!-- Executive 1-Click Scenario Presets -->
+          <div class="ml-presets-container" id="mlPresetsContainer">
+            <span class="ml-presets-title">⚡ 1-Click Scenario Presets:</span>
+            <div class="ml-presets-row">
+              <button class="ml-preset-chip" id="presetModerate" data-fee="40" data-ppg="1.85" data-mins="65" data-goal="12" title="Standard Squad Rotation Departure">
+                <span class="preset-indicator moderate"></span>
+                <span class="preset-label">Standard Rotation (€40M)</span>
+              </button>
+              <button class="ml-preset-chip active" id="presetTalisman" data-fee="100" data-ppg="2.14" data-mins="85" data-goal="20" title="Key Starter / Talisman Shock">
+                <span class="preset-indicator talisman"></span>
+                <span class="preset-label">Talisman Shock (€100M)</span>
+              </button>
+              <button class="ml-preset-chip" id="presetCrisis" data-fee="160" data-ppg="2.45" data-mins="95" data-goal="38" title="Generational Talent / Club Pillar Shock">
+                <span class="preset-indicator crisis"></span>
+                <span class="preset-label">Generational Crisis (€160M)</span>
+              </button>
+            </div>
+          </div>
+
           <div class="ml-sliders-wrap">
             <!-- Slider 1: Transfer Fee / Market Valuation -->
             <div class="ml-slider-group">
@@ -628,7 +698,7 @@
     </div>
 
     <!-- Drop-In Replacements Grid -->
-    <section class="replacements-section" aria-label="Drop-in Tactical Replacements">
+    <section class="replacements-section" id="replacementsSection" aria-label="Drop-in Tactical Replacements">
       <div class="section-label-bar">
         <span class="section-label" id="recsSectionLabel">🎯 Recommended Drop-In Tactical Replacements</span>
         <span id="filteredCandidatesCount" style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 700;">8 Candidates Found</span>
@@ -675,7 +745,7 @@
     </section>
 
     <!-- Head-to-Head Tactical Radar Workbench -->
-    <section class="radar-workbench">
+    <section class="radar-workbench" id="radarWorkbenchSection">
       <div class="card-header-flex">
         <div>
           <h2 class="card-title">

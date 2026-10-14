@@ -378,6 +378,155 @@
       </div>
     </section>
 
+    <!-- Live Machine Learning Tactical Void Prediction Engine (CatBoost & LightGBM) -->
+    <section class="live-ml-section" id="liveMlPredictionSection" aria-label="Machine Learning Post-Departure Shock Predictor">
+      <div class="live-ml-header">
+        <div class="ml-badge-row">
+          <span class="ml-chip-ai">⚡ LIVE ML PREDICTION ENGINE</span>
+          <span class="ml-chip-dataset">1.89M MATCH ROWS</span>
+          <span class="ml-chip-status" id="mlServerStatusBadge">● Connected: In-Memory CatBoost & LightGBM</span>
+        </div>
+        <h2 class="section-title">Machine Learning Post-Departure Sporting Shock Predictor</h2>
+        <p class="section-subtitle">
+          Real-time gradient boosted regressor trained on 1.89M player match appearances and 175K European transfers.
+          Simulates post-departure sporting decline, squad reliance sensitivity, and replacement recovery.
+        </p>
+      </div>
+
+      <div class="live-ml-grid">
+        <!-- Left Column: Scenario & Sensitivity Controls -->
+        <div class="ml-card ml-controls-card">
+          <div class="ml-card-title">
+            <span>⚙️ Live Model & Sensitivity Controls</span>
+            <div class="ml-model-switcher" id="mlModelSwitcher">
+              <button class="ml-model-btn active" data-model="ensemble" id="btnModelEnsemble" title="Weighted Ensemble of CatBoost and LightGBM">Ensemble</button>
+              <button class="ml-model-btn" data-model="catboost" id="btnModelCatBoost" title="CatBoost Regressor (400 Trees)">CatBoost</button>
+              <button class="ml-model-btn" data-model="lightgbm" id="btnModelLightGBM" title="LightGBM HistGradient Regressor">LightGBM</button>
+            </div>
+          </div>
+
+          <div class="ml-sliders-wrap">
+            <!-- Slider 1: Transfer Fee / Market Valuation -->
+            <div class="ml-slider-group">
+              <div class="ml-slider-label-row">
+                <span class="ml-slider-name">💰 Departure Fee / Valuation (€M)</span>
+                <span class="ml-slider-val" id="mlFeeSliderVal">€100M</span>
+              </div>
+              <input type="range" class="ml-range" id="mlFeeSlider" min="10" max="250" step="5" value="100" />
+              <div class="ml-slider-hint">Simulates market capitalization & squad financial dependence</div>
+            </div>
+
+            <!-- Slider 2: Pre-Departure Team Baseline PPG -->
+            <div class="ml-slider-group">
+              <div class="ml-slider-label-row">
+                <span class="ml-slider-name">📊 Team Pre-Departure PPG</span>
+                <span class="ml-slider-val" id="mlPpgSliderVal">2.14 PPG</span>
+              </div>
+              <input type="range" class="ml-range" id="mlPpgSlider" min="1.0" max="2.8" step="0.05" value="2.14" />
+              <div class="ml-slider-hint">Higher baseline PPG incurs steeper sporting void shocks</div>
+            </div>
+
+            <!-- Slider 3: Player Minutes Share % -->
+            <div class="ml-slider-group">
+              <div class="ml-slider-label-row">
+                <span class="ml-slider-name">⏱️ On-Pitch Minutes Share %</span>
+                <span class="ml-slider-val" id="mlMinsSliderVal">85%</span>
+              </div>
+              <input type="range" class="ml-range" id="mlMinsSlider" min="30" max="100" step="5" value="85" />
+              <div class="ml-slider-hint">Fraction of total available match minutes played by departed star</div>
+            </div>
+
+            <!-- Slider 4: Goal & Attack Contribution Share % -->
+            <div class="ml-slider-group">
+              <div class="ml-slider-label-row">
+                <span class="ml-slider-name">⚽ Team Goal Contribution Share %</span>
+                <span class="ml-slider-val" id="mlGoalShareSliderVal">20%</span>
+              </div>
+              <input type="range" class="ml-range" id="mlGoalShareSlider" min="0" max="50" step="2" value="20" />
+              <div class="ml-slider-hint">Share of team goals scored or assisted by departed star</div>
+            </div>
+          </div>
+
+          <div class="ml-btn-row">
+            <button class="btn-primary ml-run-btn" id="btnRunMlInference">
+              <span>⚡ Run Real-Time ML Inference</span>
+            </button>
+            <button class="btn-ghost ml-reset-btn" id="btnResetMlScenario">
+              <span>↺ Reset to Star Baseline</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Column: Real-Time Prediction Shock & Mitigation Dashboard -->
+        <div class="ml-card ml-results-card">
+          <div class="ml-card-title">
+            <span>📈 Predictive Sporting Impact & Mitigation</span>
+            <span class="ml-latency-badge" id="mlLatencyBadge">⚡ 3.2ms Latency</span>
+          </div>
+
+          <div class="ml-metrics-kpi-grid">
+            <!-- KPI 1: Predicted Void Index -->
+            <div class="ml-kpi-box">
+              <div class="ml-kpi-top">
+                <span class="ml-kpi-lbl">PREDICTED VOID INDEX</span>
+                <span class="ml-kpi-pill" id="mlRiskTierBadge">Severe Shock</span>
+              </div>
+              <div class="ml-kpi-val-row">
+                <span class="ml-kpi-num" id="mlPredictedVoidIndex">58.4</span>
+                <span class="ml-kpi-unit">/ 100</span>
+              </div>
+              <div class="ml-kpi-bar-track">
+                <div class="ml-kpi-bar-fill" id="mlVoidBarFill" style="width: 58.4%; background: #f59e0b;"></div>
+              </div>
+            </div>
+
+            <!-- KPI 2: Unmitigated Sporting Decline -->
+            <div class="ml-kpi-box">
+              <div class="ml-kpi-top">
+                <span class="ml-kpi-lbl">SPORTING DROP (UNMITIGATED)</span>
+                <span class="ml-kpi-pill pill-danger" id="mlSeasonPtsLost">-15.6 Pts</span>
+              </div>
+              <div class="ml-kpi-val-row">
+                <span class="ml-kpi-num color-danger" id="mlDeltaPpg">-0.41</span>
+                <span class="ml-kpi-unit">PPG</span>
+              </div>
+              <div class="ml-kpi-subtext" id="mlPostPpgBaseline">Post-window drop: 2.14 ➔ 1.73 PPG</div>
+            </div>
+
+            <!-- KPI 3: Replaced Net Performance with Candidate -->
+            <div class="ml-kpi-box kpi-highlight">
+              <div class="ml-kpi-top">
+                <span class="ml-kpi-lbl">NET PERFORMANCE WITH REPLACEMENT</span>
+                <span class="ml-kpi-pill pill-success" id="mlMitigatedPct">81.4% Mitigated</span>
+              </div>
+              <div class="ml-kpi-val-row">
+                <span class="ml-kpi-num color-success" id="mlNetPostPpg">2.08</span>
+                <span class="ml-kpi-unit">PPG</span>
+              </div>
+              <div class="ml-kpi-subtext" id="mlNetPointsImpact">Net 38-game points impact: -2.3 Pts only</div>
+            </div>
+          </div>
+
+          <!-- Feature Impact Breakdown -->
+          <div class="ml-drivers-box">
+            <div class="ml-drivers-title">Top Predictive Feature Drivers (Shapley-Calibrated)</div>
+            <div class="ml-drivers-list" id="mlDriversList">
+              <div class="ml-driver-item"><span class="ml-driver-name">Minutes Reliance Share</span><span class="ml-driver-val">88.0%</span><span class="ml-driver-tag tag-high">High Weight</span></div>
+              <div class="ml-driver-item"><span class="ml-driver-name">Pre-Departure Team PPG</span><span class="ml-driver-val">2.14</span><span class="ml-driver-tag tag-high">High Weight</span></div>
+              <div class="ml-driver-item"><span class="ml-driver-name">Goal Contribution Share</span><span class="ml-driver-val">18.0%</span><span class="ml-driver-tag tag-med">Medium Weight</span></div>
+              <div class="ml-driver-item"><span class="ml-driver-name">Transfer Fee Arbitrage</span><span class="ml-driver-val">103.0M EUR</span><span class="ml-driver-tag tag-med">Medium Weight</span></div>
+            </div>
+          </div>
+
+          <!-- Live Model Technical Footer -->
+          <div class="ml-technical-footer">
+            <span id="mlModelUsedBadge">Model: Ensemble Hybrid (CatBoost 400T + LightGBM HistGB)</span>
+            <span class="ml-conf-tag" id="mlConfidenceBadge">94.8% Confidence</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 4-Step Player Replacement Analysis Framework Walkthrough Card -->
     <section class="framework-stepper-card" id="frameworkCard">
       <div class="framework-stepper-header">

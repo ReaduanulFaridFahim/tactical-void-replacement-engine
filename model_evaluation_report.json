@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-10-14T17:19:56.813596",
+  "models": {
+    "LightGBM (HistGB)": {
+      "r2_train": 0.5618,
+      "r2_test": 0.3762,
+      "mae_test": 12.6284,
+      "rmse_test": 16.0305,
+      "train_time_sec": 1.2
+    },
+    "CatBoost": {
+      "r2_train": 0.3443,
+      "r2_test": 0.2819,
+      "mae_test": 13.7567,
+      "rmse_test": 17.1985,
+      "train_time_sec": 15.09
+    }
+  }
+}

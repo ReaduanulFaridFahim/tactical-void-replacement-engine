@@ -2189,6 +2189,1388 @@ body {
 }
 
 /* ==========================================================================
+   FEATURE SUITE: TACTICAL PITCH, FFP CALCULATOR, VERDICTS, SHARE & MODALS
+   ========================================================================== */
+
+/* 1. Executive Action Controls Bar in Header */
+.executive-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.exec-btn {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.55rem 1.15rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(12px);
+}
+
+.exec-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+  transform: translateY(-1px);
+}
+
+.exec-btn-accent {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(139, 92, 246, 0.3));
+  border-color: var(--accent-cyan);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+}
+
+.exec-btn-accent:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.4), rgba(139, 92, 246, 0.45));
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
+}
+
+/* 2. Interactive 2D Pitch Lineup & Tactical Board */
+.pitch-tactical-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  backdrop-filter: blur(16px);
+  position: relative;
+}
+
+.pitch-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pitch-controls-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.formation-selector-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.formation-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.formation-pills {
+  display: flex;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 3px;
+}
+
+.form-pill {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-pill:hover {
+  color: #fff;
+}
+
+.form-pill.active {
+  background: var(--accent-cyan);
+  color: #050b14;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+.pitch-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.pitch-field-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pitch-turf {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: radial-gradient(circle at 50% 50%, #0d1e18 0%, #07120e 100%);
+  border: 2px solid rgba(16, 185, 129, 0.35);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0, 0, 0, 0.6);
+  background-image: 
+    repeating-linear-gradient(180deg, rgba(16, 185, 129, 0.03) 0 40px, transparent 40px 80px),
+    radial-gradient(circle at 50% 50%, #0e241c 0%, #06110d 100%);
+}
+
+.pitch-markings {
+  position: absolute;
+  inset: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.pitch-outer-line {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+}
+
+.pitch-halfway-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pitch-center-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90px;
+  height: 90px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pitch-center-spot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pitch-box-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 55px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-top: none;
+}
+
+.pitch-penalty-arc-top {
+  position: absolute;
+  top: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 25px;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0 0 50px 50px;
+}
+
+.pitch-box-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 55px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-bottom: none;
+}
+
+.pitch-penalty-arc-bottom {
+  position: absolute;
+  bottom: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 25px;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px 50px 0 0;
+}
+
+.pitch-nodes-container {
+  position: absolute;
+  inset: 0;
+}
+
+/* Position Pins on the Pitch */
+.pitch-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
+}
+
+.node-pin-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 2px solid #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.node-pin-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.node-role-badge {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: rgba(15, 23, 42, 0.85);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 3px;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.node-name-lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+  max-width: 90px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tactical Void Node Pulse */
+.node-void .node-pin-avatar {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.7);
+  animation: pulse-void-pin 1.8s infinite ease-in-out;
+}
+
+@keyframes pulse-void-pin {
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.95);
+    transform: scale(1.08);
+  }
+}
+
+.node-void .node-role-badge {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+/* Candidate Replaced Node */
+.node-replaced .node-pin-avatar {
+  border-color: var(--accent-purple);
+  background: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.75);
+}
+
+.node-replaced .node-role-badge {
+  background: rgba(139, 92, 246, 0.3);
+  border-color: var(--accent-purple);
+  color: #d8b4fe;
+}
+
+.pitch-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  padding: 0.35rem 0;
+}
+
+.pitch-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Pitch Sidebar: Squad Equilibrium & Zone Intelligence */
+.pitch-sidebar-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.sidebar-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  text-transform: uppercase;
+}
+
+.squad-balance-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.balance-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.balance-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.balance-val {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: #fff;
+}
+
+.balance-bar-track {
+  height: 6px;
+  background: #1e293b;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.balance-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tactical-zone-box {
+  background: rgba(11, 16, 27, 0.8);
+  border: 1px solid var(--border-highlight);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+}
+
+.zone-box-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.zone-name {
+  font-weight: 800;
+  color: #fff;
+  font-size: 0.88rem;
+  margin-bottom: 0.3rem;
+}
+
+.zone-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 0.6rem;
+}
+
+.zone-tags-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.zone-pill {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  color: var(--accent-cyan);
+}
+
+/* 3. UEFA FFP & Premier League PSR Amortization Calculator */
+.ffp-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  backdrop-filter: blur(16px);
+}
+
+.ffp-status-pill {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ffp-status-pill.ffp-safe {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+}
+
+.ffp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.15rem;
+  margin-bottom: 1.75rem;
+}
+
+.ffp-stat-card {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ffp-stat-lbl {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ffp-stat-val {
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.ffp-stat-val.pos {
+  color: #10b981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.ffp-stat-val.neg {
+  color: #f43f5e;
+}
+
+.ffp-stat-val.highlight {
+  color: var(--accent-cyan);
+  text-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+}
+
+.ffp-stat-sub {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.ffp-timeline-box {
+  background: rgba(11, 16, 27, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+}
+
+.timeline-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 1.25rem;
+}
+
+.timeline-bars-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.timeline-year-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.timeline-bar-wrap {
+  width: 100%;
+  height: 90px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 4px;
+  border: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.timeline-bar-inner {
+  width: 80%;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.timeline-bar-val {
+  position: absolute;
+  top: -20px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.timeline-year-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.ffp-verdict-note {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.85rem;
+}
+
+/* 4. Head-to-Head Technical Director Verdict Banner */
+.radar-verdict-banner {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(139, 92, 246, 0.15));
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.radar-verdict-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.radar-verdict-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.radar-verdict-text {
+  font-size: 0.86rem;
+  color: #f1f5f9;
+  line-height: 1.45;
+}
+
+/* 5. In-Card Technical Director Verdict Box */
+.director-verdict-box {
+  background: rgba(15, 23, 42, 0.65);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 0.65rem 0.85rem;
+  margin: 0.75rem 0;
+  font-size: 0.78rem;
+}
+
+.verdict-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.verdict-text {
+  color: #cbd5e1;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* 6. Modals (Sandbox & Executive Dossier) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.modal-box {
+  background: #0d1322;
+  border: 1px solid var(--border-highlight);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+}
+
+.dossier-modal-box {
+  max-width: 860px;
+}
+
+.modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modal-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.modal-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: #fff;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sandbox-search-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.sandbox-search-input {
+  width: 100%;
+  background: #131a29;
+  border: 1px solid var(--border-highlight);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.25rem 0.85rem 2.85rem;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.sandbox-search-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.35);
+}
+
+.sandbox-results-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.sandbox-hero-box {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sandbox-recs-title {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.sandbox-recs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.sandbox-rec-chip {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sandbox-apply-btn {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 0.85rem 1.5rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.sandbox-apply-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* 7. Printable Dossier Styling */
+.modal-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dossier-print-btn {
+  background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #04101d;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.dossier-print-btn:hover {
+  opacity: 0.9;
+}
+
+.dossier-printable-content {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dossier-doc-header {
+  border-bottom: 2px solid var(--accent-cyan);
+  padding-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.dossier-club-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.dossier-confidential-stamp {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #ef4444;
+  border: 1.5px solid #ef4444;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* 8. Toast Banner */
+.toast-banner {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border: 1px solid var(--accent-cyan);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(6, 182, 212, 0.35);
+  z-index: 2000;
+  animation: slide-toast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-hide {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes slide-toast {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Timeline Bars Generator Styles */
+.timeline-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.timeline-bar-col.col-highlight .bar-visual-fill {
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+}
+
+.bar-val-tag {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bar-val-tag.pos {
+  color: #10b981;
+}
+
+.bar-val-tag.neg {
+  color: #f43f5e;
+}
+
+.bar-visual-wrap {
+  width: 100%;
+  height: 95px;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 5px;
+  border: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.bar-visual-fill {
+  width: 78%;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bar-visual-fill.fill-pos {
+  background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+}
+
+.bar-visual-fill.fill-neg {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 100%);
+}
+
+.bar-season-label {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.bar-sub-detail {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* In-Card Verdict Quote */
+.cand-verdict-quote {
+  background: rgba(15, 23, 42, 0.65);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 0.65rem 0.85rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.verdict-quote-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.verdict-quote-text {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  line-height: 1.42;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Sandbox Recommendations Grid */
+.sandbox-rec-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.sandbox-rec-card:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.sandbox-rec-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sandbox-rec-name {
+  font-weight: 800;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.sandbox-rec-score {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--accent-cyan);
+}
+
+.sandbox-rec-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Printable Executive Scouting Dossier Layout */
+.dossier-report-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dossier-top-classified {
+  border-bottom: 2px solid rgba(239, 68, 68, 0.6);
+  padding-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dossier-confidential-tag {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #f87171;
+  text-transform: uppercase;
+}
+
+.dossier-ref-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dossier-main-hdr {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dossier-report-title {
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0;
+}
+
+.dossier-report-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.dossier-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dossier-sec-title {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.35rem;
+}
+
+.dossier-faceoff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.dossier-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.dossier-col-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.dossier-player-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dossier-player-card.highlight-cand {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.dossier-p-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.dossier-p-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.dossier-p-stat {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.dossier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.dossier-table th {
+  background: rgba(15, 23, 42, 0.9);
+  padding: 0.65rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+.dossier-table td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+
+.dossier-badge-pass {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.dossier-audit-box {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dossier-audit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.dossier-audit-row strong {
+  font-family: var(--font-mono);
+  color: #fff;
+}
+
+.dossier-verdict-box {
+  background: rgba(6, 182, 212, 0.08);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 1rem 1.25rem;
+}
+
+.dossier-verdict-p {
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  line-height: 1.5;
+  font-style: italic;
+  margin: 0;
+}
+
+.dossier-footer-stamp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1.25rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dossier-stamp-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: 2px dashed rgba(6, 182, 212, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  background: rgba(6, 182, 212, 0.05);
+}
+
+.stamp-seal {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: var(--accent-cyan);
+  letter-spacing: 0.08em;
+}
+
+.stamp-engine {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.stamp-date {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.dossier-sig-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dossier-sig-line {
+  width: 220px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.dossier-sig-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* 9. Print CSS */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #dossierModal, #dossierModal * {
+    visibility: visible;
+  }
+  #dossierModal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0;
+  }
+  .modal-box {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .dossier-printable-content {
+    color: #1e293b !important;
+  }
+  .dossier-club-title {
+    color: #0f172a !important;
+  }
+}
+
+/* ==========================================================================
    COMPREHENSIVE RESPONSIVE DESIGN SYSTEM
    - 1200px: Desktops & Large Tablets Landscape
    - 1024px: Tablets Landscape / Small Laptops

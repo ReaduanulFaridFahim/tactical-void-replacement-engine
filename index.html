@@ -38,6 +38,19 @@
       <p class="hero-subtitle" id="mainHeroSubtitle">
         Quantifying the sporting decline left behind when superstar talents depart, and recommending optimal, budget-compliant drop-in replacements through multi-dimensional tactical vector similarity.
       </p>
+
+      <!-- Executive Action Controls Bar -->
+      <div class="executive-actions-bar">
+        <button class="exec-btn" id="btnOpenSandbox" title="Simulate custom hypothetical departures for any player or coach">
+          <span>🧪 What-If Sandbox</span>
+        </button>
+        <button class="exec-btn" id="btnShareFaceoff" title="Copy sharable deep link to this tactical comparison">
+          <span>🔗 Share Comparison</span>
+        </button>
+        <button class="exec-btn exec-btn-accent" id="btnExportDossier" title="Generate and download club executive scouting dossier (PDF)">
+          <span>📄 Export Scouting Dossier</span>
+        </button>
+      </div>
     </header>
 
     <!-- Search & Horizon Planning Control Bar -->
@@ -235,6 +248,136 @@
 
     </section>
 
+    <!-- 2D Pitch Lineup & Tactical Board Section -->
+    <section class="pitch-tactical-section" id="pitchTacticalSection" aria-label="Interactive Tactical Pitch Lineup">
+      <div class="pitch-header-bar">
+        <div>
+          <h2 class="card-title">
+            <span>🏟️ Interactive 2D Pitch Lineup & Tactical Board</span>
+          </h2>
+          <div class="card-subtext" id="pitchSubtext">
+            Visualizing squad formation dynamics, talisman departure void, and candidate drop-in zone integration
+          </div>
+        </div>
+        <div class="pitch-controls-wrap">
+          <div class="formation-selector-group">
+            <span class="formation-label">Tactical System:</span>
+            <div class="formation-pills" id="formationPills">
+              <button class="form-pill active" data-formation="4-3-3">4-3-3</button>
+              <button class="form-pill" data-formation="4-2-3-1">4-2-3-1</button>
+              <button class="form-pill" data-formation="3-4-2-1">3-4-2-1</button>
+              <button class="form-pill" data-formation="4-4-2">4-4-2</button>
+              <button class="form-pill" data-formation="3-5-2">3-5-2</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pitch-layout-grid">
+        <!-- The 2D Pitch Field Container -->
+        <div class="pitch-field-card">
+          <div class="pitch-turf" id="pitchTurf">
+            <!-- Grass turf markings -->
+            <div class="pitch-markings">
+              <div class="pitch-outer-line"></div>
+              <div class="pitch-halfway-line"></div>
+              <div class="pitch-center-circle"></div>
+              <div class="pitch-center-spot"></div>
+              <div class="pitch-box-top"></div>
+              <div class="pitch-penalty-arc-top"></div>
+              <div class="pitch-box-bottom"></div>
+              <div class="pitch-penalty-arc-bottom"></div>
+            </div>
+
+            <!-- Dynamic 11 Position Nodes -->
+            <div class="pitch-nodes-container" id="pitchNodesContainer">
+              <!-- Rendered dynamically via JavaScript -->
+            </div>
+          </div>
+
+          <!-- Pitch Legend -->
+          <div class="pitch-legend">
+            <div class="pitch-legend-item">
+              <span class="legend-color-dot" style="background: #3b82f6;"></span>
+              <span>Squad Teammate</span>
+            </div>
+            <div class="pitch-legend-item">
+              <span class="legend-color-dot" style="background: #ef4444; box-shadow: 0 0 10px #ef4444;"></span>
+              <span style="color: #ef4444; font-weight: 700;">Tactical Void Slot</span>
+            </div>
+            <div class="pitch-legend-item">
+              <span class="legend-color-dot" style="background: var(--accent-purple); box-shadow: 0 0 10px var(--accent-purple);"></span>
+              <span style="color: var(--accent-purple); font-weight: 700;">Drop-In Candidate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Squad Balance Metrics & Zone Intelligence Sidebar -->
+        <div class="pitch-sidebar-card">
+          <div class="sidebar-header">
+            <h3 class="sidebar-title">⚡ Squad Tactical Equilibrium</h3>
+            <span class="sidebar-badge" id="squadEquilibriumBadge">Balanced System</span>
+          </div>
+
+          <!-- 4 Squad Balance Meters -->
+          <div class="squad-balance-group">
+            <div class="balance-item">
+              <div class="balance-label-row">
+                <span>🔥 Team High-Press Intensity</span>
+                <span class="balance-val" id="valPressIntensity">88%</span>
+              </div>
+              <div class="balance-bar-track">
+                <div class="balance-bar-fill" id="fillPressIntensity" style="width: 88%;"></div>
+              </div>
+            </div>
+
+            <div class="balance-item">
+              <div class="balance-label-row">
+                <span>✈️ Aerial Duel Dominance</span>
+                <span class="balance-val" id="valAerialDom">74%</span>
+              </div>
+              <div class="balance-bar-track">
+                <div class="balance-bar-fill" id="fillAerialDom" style="width: 74%; background: #3b82f6;"></div>
+              </div>
+            </div>
+
+            <div class="balance-item">
+              <div class="balance-label-row">
+                <span>↔️ Flank Width Generation</span>
+                <span class="balance-val" id="valWidthGen">91%</span>
+              </div>
+              <div class="balance-bar-track">
+                <div class="balance-bar-fill" id="fillWidthGen" style="width: 91%; background: #10b981;"></div>
+              </div>
+            </div>
+
+            <div class="balance-item">
+              <div class="balance-label-row">
+                <span>🎯 Central Half-Space Progression</span>
+                <span class="balance-val" id="valCentralProg">86%</span>
+              </div>
+              <div class="balance-bar-track">
+                <div class="balance-bar-fill" id="fillCentralProg" style="width: 86%; background: var(--accent-purple);"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Tactical Zone Briefing Box -->
+          <div class="tactical-zone-box" id="tacticalZoneBox">
+            <div class="zone-box-title">📍 Active Tactical Zone of Influence</div>
+            <div class="zone-name" id="zoneActiveName">Inverted Inside-Forward Channel</div>
+            <p class="zone-desc" id="zoneActiveDesc">
+              Occupies the opponent's defensive seam between fullback and center-back, cutting inside to generate shots and overload central playmakers.
+            </p>
+            <div class="zone-tags-row" id="zoneTagsRow">
+              <span class="zone-pill">Zone 14 Penetration</span>
+              <span class="zone-pill">Cutback Threat</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 4-Step Player Replacement Analysis Framework Walkthrough Card -->
     <section class="framework-stepper-card" id="frameworkCard">
       <div class="framework-stepper-header">
@@ -425,6 +568,17 @@
         </div>
       </div>
 
+      <!-- Head-to-Head Technical Director Verdict Banner -->
+      <div class="radar-verdict-banner" id="radarVerdictBanner">
+        <div class="radar-verdict-icon">🧠</div>
+        <div class="radar-verdict-body">
+          <div class="radar-verdict-title">TECHNICAL DIRECTOR EXECUTIVE VERDICT</div>
+          <p class="radar-verdict-text" id="radarVerdictText">
+            Evaluating candidate compatibility, metric replication index, and fee arbitrage efficiency...
+          </p>
+        </div>
+      </div>
+
       <div class="radar-layout">
         
         <!-- Radar Canvas -->
@@ -459,6 +613,61 @@
           </table>
         </div>
 
+      </div>
+    </section>
+
+    <!-- UEFA FFP & Premier League PSR Amortization Calculator Section -->
+    <section class="ffp-section" id="ffpSection" aria-label="FFP and PSR Financial Amortization Audit">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-title">
+            <span>💰 UEFA FFP & Premier League PSR Amortization Calculator</span>
+          </h2>
+          <div class="card-subtext" id="ffpSubtext">
+            Simulating 5-year contract book disposal gains, replacement amortization schedules, and net FFP headroom
+          </div>
+        </div>
+        <div class="ffp-status-pill ffp-safe" id="ffpComplianceBadge">
+          ✓ UEFA FFP & PL PSR Fully Compliant
+        </div>
+      </div>
+
+      <div class="ffp-grid">
+        <!-- 4 Key Financial Metrics -->
+        <div class="ffp-stat-card">
+          <span class="ffp-stat-lbl">Liquidated Sale Book Gain (P&L Credit)</span>
+          <div class="ffp-stat-val pos" id="ffpBookGain">+€105.0M</div>
+          <span class="ffp-stat-sub" id="ffpBookGainSub">Fee €127.0M minus €22.0M NBV</span>
+        </div>
+
+        <div class="ffp-stat-card">
+          <span class="ffp-stat-lbl">Replacement 5-Year Amortization</span>
+          <div class="ffp-stat-val neg" id="ffpAmortPerYr">-€7.6M / yr</div>
+          <span class="ffp-stat-sub" id="ffpAmortSub">€38.0M fee over 5-year contract</span>
+        </div>
+
+        <div class="ffp-stat-card">
+          <span class="ffp-stat-lbl">Annual Wage Bill Arbitrage</span>
+          <div class="ffp-stat-val pos" id="ffpWageSavings">+€6.9M / yr</div>
+          <span class="ffp-stat-sub" id="ffpWageSub">€4.5M vs €11.4M departed star</span>
+        </div>
+
+        <div class="ffp-stat-card">
+          <span class="ffp-stat-lbl">Year 1 Net FFP Headroom Unlocked</span>
+          <div class="ffp-stat-val highlight" id="ffpYear1Headroom">+€104.3M</div>
+          <span class="ffp-stat-sub">Immediate liquidity margin unlocked</span>
+        </div>
+      </div>
+
+      <!-- 5-Year Financial P&L Timeline Projection Table/Chart -->
+      <div class="ffp-timeline-box">
+        <h3 class="timeline-title">📈 5-Year Net P&L Amortization Timeline (€ Millions)</h3>
+        <div class="timeline-bars-grid" id="ffpTimelineBars">
+          <!-- Dynamically generated 5 year bars via JavaScript -->
+        </div>
+        <div class="ffp-verdict-note" id="ffpVerdictNote">
+          <strong>Strategic Financial Summary:</strong> Liquidating this star unlocks massive immediate accounting relief. Reinvesting in the target drop-in replacement on a 5-year contract leaves the club with <strong>+€104.3M</strong> in Year 1 FFP breathing room.
+        </div>
       </div>
     </section>
 
@@ -522,6 +731,67 @@
         </div>
       </div>
     </footer>
+
+    <!-- What-If Custom Departure Sandbox Modal -->
+    <div class="modal-overlay" id="sandboxModal" style="display: none;">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span style="font-size: 1.4rem;">🧪</span>
+            <div>
+              <h3 class="modal-title">What-If Departure Simulation Sandbox</h3>
+              <p class="modal-sub">Simulate hypothetical departures for ANY player or coach across European football</p>
+            </div>
+          </div>
+          <button class="modal-close-btn" id="btnCloseSandbox" aria-label="Close Sandbox Modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="sandbox-search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="sandbox-search-input" id="sandboxSearchInput" placeholder="Search ANY player or coach to simulate (e.g. Saka, Musiala, Rodri, Saliba, Yamal, Arteta)..." autocomplete="off">
+            <div class="search-dropdown" id="sandboxSearchDropdown"></div>
+          </div>
+
+          <div class="sandbox-results-panel" id="sandboxResultsPanel" style="display: none;">
+            <div class="sandbox-hero-box" id="sandboxHeroBox"></div>
+            <div class="sandbox-void-meter-wrap" id="sandboxVoidMeterWrap"></div>
+            <div class="sandbox-recs-title">🎯 Instant Recommended Drop-In Replacements:</div>
+            <div class="sandbox-recs-grid" id="sandboxRecsGrid"></div>
+            <button class="sandbox-apply-btn" id="btnApplySandbox">🚀 Load as Active Departure in Dashboard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Executive Scouting Dossier Printable Modal -->
+    <div class="modal-overlay" id="dossierModal" style="display: none;">
+      <div class="modal-box dossier-modal-box">
+        <div class="modal-header no-print">
+          <div class="modal-title-wrap">
+            <span style="font-size: 1.4rem;">📄</span>
+            <div>
+              <h3 class="modal-title">Official Club Executive Scouting Dossier</h3>
+              <p class="modal-sub">Confidential Sporting Director Technical Transfer Briefing</p>
+            </div>
+          </div>
+          <div class="modal-actions-right">
+            <button class="dossier-print-btn" id="btnPrintDossier">🖨️ Print / Save as PDF</button>
+            <button class="modal-close-btn" id="btnCloseDossier" aria-label="Close Dossier Modal">&times;</button>
+          </div>
+        </div>
+
+        <div class="dossier-printable-content" id="dossierPrintableContent">
+          <!-- Dynamically populated executive briefing report via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div class="toast-banner" id="toastBanner" style="display: none;">
+      <span class="toast-icon">⚡</span>
+      <span class="toast-message" id="toastMessage">Link copied to clipboard!</span>
+    </div>
 
   </div>
 

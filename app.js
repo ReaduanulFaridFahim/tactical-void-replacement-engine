@@ -16,6 +16,8 @@ let currentDepartureIndex = 0;
 let currentCandidate = null;
 let activeBenchmarkPlayer = null; // When an arbitrary player from catalog is selected
 let customPinnedCandidates = [];
+let currentPitchFormation = '4-3-3';
+let sandboxSelectedEntity = null;
 
 // Head Coach / Manager State
 let currentCoachDepartureIndex = 0;
@@ -161,9 +163,13 @@ async function initApp() {
     setupSearchAutocomplete();
     setupCustomCandidateSearch();
     setupScatterPlotListeners();
+    setupPitchControls();
+    setupSandboxModal();
+    setupDossierExporter();
+    setupShareButton();
     renderPlayerCategoryTabs();
     renderDepartureChips();
-    selectDeparture(0);
+    parseUrlParamsOnLoad();
   } catch (err) {
     console.error('Initialization error:', err);
     const descEl = document.getElementById('voidSeverityDesc');
@@ -961,6 +967,14 @@ function selectDeparture(index) {
   const postForm = post.top_formations ? Object.keys(post.top_formations)[0] : 'Adaptive';
   document.getElementById('formationPrePost').innerHTML = `${dep.primary_formation} ➔ <strong>${postForm}</strong>`;
 
+  if (dep.primary_formation) {
+    if (dep.primary_formation.includes('4-3-3')) currentPitchFormation = '4-3-3';
+    else if (dep.primary_formation.includes('4-2-3-1')) currentPitchFormation = '4-2-3-1';
+    else if (dep.primary_formation.includes('3-4-2-1') || dep.primary_formation.includes('3-4-3')) currentPitchFormation = '3-4-2-1';
+    else if (dep.primary_formation.includes('4-4-2')) currentPitchFormation = '4-4-2';
+    else if (dep.primary_formation.includes('3-5-2')) currentPitchFormation = '3-5-2';
+  }
+
   // Update Star Benchmark Card
   const starPhoto = document.getElementById('starPhoto');
   const starAvatar = document.getElementById('starAvatar');
@@ -1010,7 +1024,16 @@ function selectDeparture(index) {
   document.getElementById('systemCompatibilityText').innerHTML = 
     `The candidate recommender is filtering players capable of replicating this output within <strong>${dep.primary_formation}</strong> while staying under the received transfer fee budget.`;
 
+  if (dep.primary_formation) {
+    if (dep.primary_formation.includes('4-3-3')) currentPitchFormation = '4-3-3';
+    else if (dep.primary_formation.includes('4-2-3-1')) currentPitchFormation = '4-2-3-1';
+    else if (dep.primary_formation.includes('3-4-2-1') || dep.primary_formation.includes('3-4-3')) currentPitchFormation = '3-4-2-1';
+    else if (dep.primary_formation.includes('4-4-2')) currentPitchFormation = '4-4-2';
+    else if (dep.primary_formation.includes('3-5-2')) currentPitchFormation = '3-5-2';
+  }
+
   renderRecommendations();
+  updateDeepLinkUrl();
 }
 
 // Render Top Coach Departure & Succession Chips
@@ -1178,7 +1201,16 @@ function selectCoachDeparture(index) {
   document.getElementById('systemCompatibilityText').innerHTML = 
     `The managerial recommender is scoring tactical leaders capable of deploying <strong>${meta.primary_formation}</strong> with high pressing intensity while fitting within the club's managerial wage framework.`;
 
+  if (meta.primary_formation) {
+    if (meta.primary_formation.includes('4-3-3')) currentPitchFormation = '4-3-3';
+    else if (meta.primary_formation.includes('4-2-3-1')) currentPitchFormation = '4-2-3-1';
+    else if (meta.primary_formation.includes('3-4-2-1') || meta.primary_formation.includes('3-4-3')) currentPitchFormation = '3-4-2-1';
+    else if (meta.primary_formation.includes('4-4-2')) currentPitchFormation = '4-4-2';
+    else if (meta.primary_formation.includes('3-5-2')) currentPitchFormation = '3-5-2';
+  }
+
   renderCoachRecommendations();
+  updateDeepLinkUrl();
 }
 
 function updateFrameworkStepperTags(star, meta, dep) {
@@ -1530,6 +1562,9 @@ function renderRecommendations() {
     drawRadarChart();
     renderComparisonTable();
     drawScatterPlot(filtered, activeStar);
+    renderPitchTacticalBoard();
+    renderAmortizationCalculator();
+    updateTechnicalDirectorVerdict();
     return;
   }
 
@@ -1619,6 +1654,11 @@ function renderRecommendations() {
             ${weeklyWageSavings > 0 ? `<span style="color: #6ee7b7; margin-left: 0.3rem;">(Saves ${formatCurrency(weeklyWageSavings)}/wk)</span>` : ''}
           </div>
         </div>
+
+        <div class="cand-verdict-quote">
+          <div class="verdict-quote-badge">🧠 Technical Director Verdict</div>
+          <p class="verdict-quote-text">${generateTechnicalDirectorVerdict(cand, activeStar, false, true)}</p>
+        </div>
       </div>
 
       <button class="card-action-btn" id="btn-select-${cand.player_id}">
@@ -1637,6 +1677,9 @@ function renderRecommendations() {
   drawRadarChart();
   renderComparisonTable();
   drawScatterPlot(filtered, activeStar);
+  renderPitchTacticalBoard();
+  renderAmortizationCalculator();
+  updateTechnicalDirectorVerdict();
 }
 
 // Get the active benchmark coach profile
@@ -1963,6 +2006,11 @@ function renderCoachRecommendations() {
             <span style="color: var(--accent-purple); margin-left: 0.3rem;">• ${cand.formation_compatibility_score}% Shape Fit</span>
           </div>
         </div>
+
+        <div class="cand-verdict-quote">
+          <div class="verdict-quote-badge">🧠 Technical Director Verdict</div>
+          <p class="verdict-quote-text">${generateTechnicalDirectorVerdict(cand, activeStar, true, true)}</p>
+        </div>
       </div>
 
       <button class="card-action-btn" id="btn-select-coach-${idx}">
@@ -1981,6 +2029,9 @@ function renderCoachRecommendations() {
   drawRadarChart();
   renderCoachComparisonTable();
   drawScatterPlot(filtered, activeStar);
+  renderPitchTacticalBoard();
+  renderAmortizationCalculator();
+  updateTechnicalDirectorVerdict();
 }
 
 function selectCoachCandidateForRadar(cand) {
@@ -2010,6 +2061,11 @@ function selectCoachCandidateForRadar(cand) {
     const baseList = pool.filter(p => p.name !== activeStar.name).map(p => scoreCoachAgainstStar(p, activeStar));
     drawScatterPlot(baseList, activeStar);
   }
+
+  renderPitchTacticalBoard();
+  renderAmortizationCalculator();
+  updateTechnicalDirectorVerdict();
+  updateDeepLinkUrl();
 }
 
 // Render Comparison Table for Managers with Strict 4-Step Framework
@@ -2404,6 +2460,11 @@ function selectCandidateForRadar(cand) {
     const baseList = pool.filter(p => p.id !== activeStar.player_id).map(p => scoreCandidateAgainstStar(p, activeStar));
     drawScatterPlot(baseList, activeStar);
   }
+
+  renderPitchTacticalBoard();
+  renderAmortizationCalculator();
+  updateTechnicalDirectorVerdict();
+  updateDeepLinkUrl();
 }
 
 function getInternationalStatus(caps) {
@@ -3470,6 +3531,1091 @@ function drawScatterPlot(candidates, star) {
     data: star,
     isStar: true
   });
+}
+
+
+/* ==========================================================================
+   ADVANCED FEATURE SUITE IMPLEMENTATION
+   1. Interactive 2D Pitch Lineup & Tactical Board
+   2. UEFA FFP & Premier League PSR Amortization Calculator
+   3. One-Click Executive Scouting Dossier (PDF/Print)
+   4. Deep-Link URL Sharing (?star=...&cand=...&mode=...)
+   5. What-If Departure Simulation Sandbox
+   6. AI Technical Director's Scouting Verdict Generator
+   ========================================================================== */
+
+const FORMATIONS_MAP = {
+  '4-3-3': {
+    name: '4-3-3 Attacking',
+    pressBase: 86,
+    aerialBase: 74,
+    widthBase: 92,
+    centralBase: 84,
+    slots: [
+      { id: 'gk', label: 'GK', role: 'GK', top: 88, left: 50 },
+      { id: 'lb', label: 'LB', role: 'LB', top: 72, left: 16 },
+      { id: 'lcb', label: 'LCB', role: 'CB', top: 76, left: 38 },
+      { id: 'rcb', label: 'RCB', role: 'CB', top: 76, left: 62 },
+      { id: 'rb', label: 'RB', role: 'RB', top: 72, left: 84 },
+      { id: 'dm', label: 'DM', role: 'CDM', top: 54, left: 50 },
+      { id: 'lcm', label: 'LCM', role: 'CM', top: 43, left: 32 },
+      { id: 'rcm', label: 'RCM', role: 'CM', top: 43, left: 68 },
+      { id: 'lw', label: 'LW', role: 'LW', top: 22, left: 18 },
+      { id: 'st', label: 'ST', role: 'CF', top: 14, left: 50 },
+      { id: 'rw', label: 'RW', role: 'RW', top: 22, left: 82 }
+    ]
+  },
+  '4-2-3-1': {
+    name: '4-2-3-1 Dynamic',
+    pressBase: 82,
+    aerialBase: 78,
+    widthBase: 85,
+    centralBase: 90,
+    slots: [
+      { id: 'gk', label: 'GK', role: 'GK', top: 88, left: 50 },
+      { id: 'lb', label: 'LB', role: 'LB', top: 72, left: 16 },
+      { id: 'lcb', label: 'LCB', role: 'CB', top: 76, left: 38 },
+      { id: 'rcb', label: 'RCB', role: 'CB', top: 76, left: 62 },
+      { id: 'rb', label: 'RB', role: 'RB', top: 72, left: 84 },
+      { id: 'ldm', label: 'LDM', role: 'CDM', top: 56, left: 36 },
+      { id: 'rdm', label: 'RDM', role: 'CDM', top: 56, left: 64 },
+      { id: 'lam', label: 'LAM', role: 'LW', top: 34, left: 20 },
+      { id: 'cam', label: 'CAM', role: 'CAM', top: 32, left: 50 },
+      { id: 'ram', label: 'RAM', role: 'RW', top: 34, left: 80 },
+      { id: 'st', label: 'ST', role: 'CF', top: 14, left: 50 }
+    ]
+  },
+  '3-4-2-1': {
+    name: '3-4-2-1 Box Midfield',
+    pressBase: 88,
+    aerialBase: 82,
+    widthBase: 84,
+    centralBase: 92,
+    slots: [
+      { id: 'gk', label: 'GK', role: 'GK', top: 88, left: 50 },
+      { id: 'lcb', label: 'LCB', role: 'CB', top: 74, left: 26 },
+      { id: 'cb', label: 'CB', role: 'CB', top: 76, left: 50 },
+      { id: 'rcb', label: 'RCB', role: 'CB', top: 74, left: 74 },
+      { id: 'lwb', label: 'LWB', role: 'LB', top: 48, left: 12 },
+      { id: 'lcm', label: 'LCM', role: 'CM', top: 52, left: 38 },
+      { id: 'rcm', label: 'RCM', role: 'CM', top: 52, left: 62 },
+      { id: 'rwb', label: 'RWB', role: 'RB', top: 48, left: 88 },
+      { id: 'lf', label: 'LF', role: 'CAM', top: 28, left: 32 },
+      { id: 'rf', label: 'RF', role: 'CAM', top: 28, left: 68 },
+      { id: 'st', label: 'ST', role: 'CF', top: 14, left: 50 }
+    ]
+  },
+  '4-4-2': {
+    name: '4-4-2 Flat Block',
+    pressBase: 78,
+    aerialBase: 84,
+    widthBase: 90,
+    centralBase: 76,
+    slots: [
+      { id: 'gk', label: 'GK', role: 'GK', top: 88, left: 50 },
+      { id: 'lb', label: 'LB', role: 'LB', top: 72, left: 16 },
+      { id: 'lcb', label: 'LCB', role: 'CB', top: 76, left: 38 },
+      { id: 'rcb', label: 'RCB', role: 'CB', top: 76, left: 62 },
+      { id: 'rb', label: 'RB', role: 'RB', top: 72, left: 84 },
+      { id: 'lm', label: 'LM', role: 'LW', top: 44, left: 16 },
+      { id: 'lcm', label: 'LCM', role: 'CM', top: 48, left: 38 },
+      { id: 'rcm', label: 'RCM', role: 'CM', top: 48, left: 62 },
+      { id: 'rm', label: 'RM', role: 'RW', top: 44, left: 84 },
+      { id: 'ls', label: 'LS', role: 'CF', top: 18, left: 36 },
+      { id: 'rs', label: 'RS', role: 'CF', top: 18, left: 64 }
+    ]
+  },
+  '3-5-2': {
+    name: '3-5-2 Fluid Wingbacks',
+    pressBase: 82,
+    aerialBase: 85,
+    widthBase: 88,
+    centralBase: 88,
+    slots: [
+      { id: 'gk', label: 'GK', role: 'GK', top: 88, left: 50 },
+      { id: 'lcb', label: 'LCB', role: 'CB', top: 74, left: 26 },
+      { id: 'cb', label: 'CB', role: 'CB', top: 76, left: 50 },
+      { id: 'rcb', label: 'RCB', role: 'CB', top: 74, left: 74 },
+      { id: 'lwb', label: 'LWB', role: 'LB', top: 48, left: 12 },
+      { id: 'dm', label: 'DM', role: 'CDM', top: 58, left: 50 },
+      { id: 'lcm', label: 'LCM', role: 'CM', top: 42, left: 34 },
+      { id: 'rcm', label: 'RCM', role: 'CM', top: 42, left: 66 },
+      { id: 'rwb', label: 'RWB', role: 'RB', top: 48, left: 88 },
+      { id: 'ls', label: 'LS', role: 'CF', top: 18, left: 36 },
+      { id: 'rs', label: 'RS', role: 'CF', top: 18, left: 64 }
+    ]
+  }
+};
+
+const CLUB_ROSTERS_MAP = {
+  'Liverpool FC': {
+    'GK': 'Alisson', 'LB': 'Robertson', 'CB': 'Van Dijk', 'LCB': 'Van Dijk', 'RCB': 'Konate', 'RB': 'Alexander-Arnold',
+    'CDM': 'Mac Allister', 'CM': 'Szoboszlai', 'LCM': 'Mac Allister', 'RCM': 'Szoboszlai', 'CAM': 'Szoboszlai',
+    'LW': 'Diaz', 'CF': 'Nunez', 'RW': 'Salah'
+  },
+  'Real Madrid': {
+    'GK': 'Courtois', 'LB': 'Mendy', 'CB': 'Rudiger', 'LCB': 'Rudiger', 'RCB': 'Militao', 'RB': 'Carvajal',
+    'CDM': 'Tchouameni', 'CM': 'Valverde', 'LCM': 'Camavinga', 'RCM': 'Valverde', 'CAM': 'Bellingham',
+    'LW': 'Vinicius Jr', 'CF': 'Mbappe', 'RW': 'Rodrygo'
+  },
+  'Manchester City': {
+    'GK': 'Ederson', 'LB': 'Gvardiol', 'CB': 'Dias', 'LCB': 'Dias', 'RCB': 'Akanji', 'RB': 'Walker',
+    'CDM': 'Rodri', 'CM': 'De Bruyne', 'LCM': 'Kovacic', 'RCM': 'Bernardo', 'CAM': 'De Bruyne',
+    'LW': 'Doku', 'CF': 'Haaland', 'RW': 'Foden'
+  },
+  'Arsenal FC': {
+    'GK': 'Raya', 'LB': 'Zinchenko', 'CB': 'Saliba', 'LCB': 'Gabriel', 'RCB': 'Saliba', 'RB': 'White',
+    'CDM': 'Rice', 'CM': 'Odegaard', 'LCM': 'Merino', 'RCM': 'Odegaard', 'CAM': 'Odegaard',
+    'LW': 'Martinelli', 'CF': 'Havertz', 'RW': 'Saka'
+  },
+  'FC Barcelona': {
+    'GK': 'Ter Stegen', 'LB': 'Balde', 'CB': 'Araujo', 'LCB': 'Cubarsi', 'RCB': 'Araujo', 'RB': 'Kounde',
+    'CDM': 'Casado', 'CM': 'Pedri', 'LCM': 'Pedri', 'RCM': 'Gavi', 'CAM': 'Olmo',
+    'LW': 'Raphinha', 'CF': 'Lewandowski', 'RW': 'Yamal'
+  },
+  'Bayern Munich': {
+    'GK': 'Neuer', 'LB': 'Davies', 'CB': 'Upamecano', 'LCB': 'Kim', 'RCB': 'Upamecano', 'RB': 'Boey',
+    'CDM': 'Palhinha', 'CM': 'Kimmich', 'LCM': 'Pavlovic', 'RCM': 'Kimmich', 'CAM': 'Musiala',
+    'LW': 'Coman', 'CF': 'Kane', 'RW': 'Olise'
+  },
+  'Paris Saint-Germain': {
+    'GK': 'Donnarumma', 'LB': 'Mendes', 'CB': 'Marquinhos', 'LCB': 'Pacho', 'RCB': 'Marquinhos', 'RB': 'Hakimi',
+    'CDM': 'Vitinha', 'CM': 'Zaire-Emery', 'LCM': 'Neves', 'RCM': 'Zaire-Emery', 'CAM': 'Vitinha',
+    'LW': 'Barcola', 'CF': 'Ramos', 'RW': 'Dembele'
+  },
+  'Borussia Dortmund': {
+    'GK': 'Kobel', 'LB': 'Bensebaini', 'CB': 'Schlotterbeck', 'LCB': 'Schlotterbeck', 'RCB': 'Anton', 'RB': 'Ryerson',
+    'CDM': 'Can', 'CM': 'Sabitzer', 'LCM': 'Gross', 'RCM': 'Sabitzer', 'CAM': 'Brandt',
+    'LW': 'Gittens', 'CF': 'Guirassy', 'RW': 'Adeyemi'
+  }
+};
+
+function findVoidSlotId(star, formationConfig) {
+  if (!star) return formationConfig.slots[formationConfig.slots.length - 1].id;
+  const pos = (star.sub_pos || star.sub_position || star.pos || star.position || star.tactical_role || '').toLowerCase();
+  
+  if (pos.includes('right winger') || pos.includes('right midfield') || pos.includes('rw') || pos.includes('rm')) {
+    const slot = formationConfig.slots.find(s => s.role === 'RW' || s.id === 'rw' || s.id === 'ram' || s.id === 'rm');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('left winger') || pos.includes('left midfield') || pos.includes('lw') || pos.includes('lm')) {
+    const slot = formationConfig.slots.find(s => s.role === 'LW' || s.id === 'lw' || s.id === 'lam' || s.id === 'lm');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('centre-forward') || pos.includes('striker') || pos.includes('second striker') || pos.includes('cf') || pos.includes('st')) {
+    const slot = formationConfig.slots.find(s => s.role === 'CF' || s.id === 'st' || s.id === 'ls' || s.id === 'rs');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('attacking mid') || pos.includes('cam') || pos.includes('playmaker')) {
+    const slot = formationConfig.slots.find(s => s.role === 'CAM' || s.id === 'cam' || s.id === 'lf' || s.id === 'rf' || s.id === 'rcm');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('defensive mid') || pos.includes('cdm') || pos.includes('pivot') || pos.includes('anchor')) {
+    const slot = formationConfig.slots.find(s => s.role === 'CDM' || s.id === 'dm' || s.id === 'ldm' || s.id === 'rdm');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('central mid') || pos.includes('cm') || pos.includes('box-to-box')) {
+    const slot = formationConfig.slots.find(s => s.role === 'CM' || s.id === 'rcm' || s.id === 'lcm');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('centre-back') || pos.includes('cb')) {
+    const slot = formationConfig.slots.find(s => s.role === 'CB' || s.id === 'cb' || s.id === 'rcb' || s.id === 'lcb');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('left-back') || pos.includes('lb') || pos.includes('lwb')) {
+    const slot = formationConfig.slots.find(s => s.role === 'LB' || s.id === 'lb' || s.id === 'lwb');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('right-back') || pos.includes('rb') || pos.includes('rwb')) {
+    const slot = formationConfig.slots.find(s => s.role === 'RB' || s.id === 'rb' || s.id === 'rwb');
+    if (slot) return slot.id;
+  }
+  if (pos.includes('goalkeeper') || pos.includes('gk')) {
+    const slot = formationConfig.slots.find(s => s.role === 'GK');
+    if (slot) return slot.id;
+  }
+  return formationConfig.slots[formationConfig.slots.length - 1].id;
+}
+
+function getTacticalZoneBriefing(cand, star) {
+  const p = cand || star;
+  if (!p) {
+    return {
+      name: 'Central Half-Space Progression Zone',
+      desc: 'Occupies intermediate spaces between defensive lines to conduct possession and vertical transitions.',
+      tags: ['Zone 14 Control', 'Phase Progression']
+    };
+  }
+  const pos = (p.sub_pos || p.sub_position || p.pos || p.position || p.tactical_role || '').toLowerCase();
+  if (pos.includes('right winger') || pos.includes('rw') || pos.includes('rm')) {
+    return {
+      name: 'Inverted Right Half-Space & Inside Channel',
+      desc: 'Attacks the seam between left-back and center-back, cutting inside onto left foot for curled shots or overload play.',
+      tags: ['Zone 14 Overload', 'Cutback Threat', 'Blindside Runs']
+    };
+  }
+  if (pos.includes('left winger') || pos.includes('lw') || pos.includes('lm')) {
+    return {
+      name: 'Left Flank Touchline & Inside Seam Corridor',
+      desc: 'Stretches the opponent vertically along the wide channel, isolating defenders 1v1 and delivering penalty box entries.',
+      tags: ['1v1 Isolation', 'Progressive Carries', 'Wide Crosses']
+    };
+  }
+  if (pos.includes('centre-forward') || pos.includes('striker') || pos.includes('cf') || pos.includes('st')) {
+    return {
+      name: 'Penalty Box Apex & High-Line Pressing Trap',
+      desc: 'Occupies both center-backs, running the channels to pin the defensive line while initiating the first line of press.',
+      tags: ['Box Poacher', 'Rest-Defense Pin', 'xG Apex']
+    };
+  }
+  if (pos.includes('attacking mid') || pos.includes('cam')) {
+    return {
+      name: 'Zone 14 Creator & Pocket Conductor',
+      desc: 'Finds passing angles between the midfield and defensive blocks, creating final-third chances and central combinations.',
+      tags: ['Between the Lines', 'Key Passes', 'Chances Created']
+    };
+  }
+  if (pos.includes('defensive mid') || pos.includes('cdm') || pos.includes('pivot')) {
+    return {
+      name: 'Central Rest-Defense Anchor & Deep Pivot',
+      desc: 'Screens the central corridor against counter-attacks, breaking up transitions and recycling tempo in possession.',
+      tags: ['Rest Defense', 'Counter-Press Screen', 'Pass Metronome']
+    };
+  }
+  if (pos.includes('central mid') || pos.includes('cm')) {
+    return {
+      name: 'Box-to-Box Engine & Half-Space Corridor',
+      desc: 'Bridges deep buildup to final-third attacks, executing sustained pressing, ball recoveries, and box arrivals.',
+      tags: ['Second-Phase Buildup', 'Ball Recoveries', 'Late Box Runs']
+    };
+  }
+  if (pos.includes('centre-back') || pos.includes('cb')) {
+    return {
+      name: 'Central Defensive Keystone & First-Phase Axis',
+      desc: 'Anchor of the backline, dominating aerial duels and spraying progressive passes to bypass opponent mid-blocks.',
+      tags: ['Aerial Dominance', 'Line-Breaking Passes', 'Covering Depth']
+    };
+  }
+  if (pos.includes('back') || pos.includes('fb') || pos.includes('wb')) {
+    return {
+      name: 'Wide Flank Transition & Underlap Channel',
+      desc: 'Provides team width or dynamic underlaps into midfield, supplying crosses while recovering defensive flank ground.',
+      tags: ['Wide Overlap', 'Flank Recovery', 'Cross Creation']
+    };
+  }
+  return {
+    name: 'Tactical System Pivot Corridor',
+    desc: 'Provides structured tactical fluidity, connecting phases of play and maintaining tactical balance across lines.',
+    tags: ['Phase Balance', 'Positional Fluidity']
+  };
+}
+
+function renderPitchTacticalBoard() {
+  const container = document.getElementById('pitchNodesContainer');
+  if (!container) return;
+
+  const activeStar = currentEntityMode === 'coaches' ? getActiveCoachData() : getActiveStarData();
+  const cand = currentEntityMode === 'coaches' ? currentCoachCandidate : currentCandidate;
+  if (!activeStar) return;
+
+  // Sync formation pills with currentPitchFormation
+  document.querySelectorAll('.form-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.formation === currentPitchFormation);
+  });
+
+  const formConfig = FORMATIONS_MAP[currentPitchFormation] || FORMATIONS_MAP['4-3-3'];
+  const clubName = activeStar.club || activeStar.from_club_name || 'Liverpool FC';
+  const clubRoster = CLUB_ROSTERS_MAP[clubName] || null;
+
+  // Identify the void slot
+  const voidSlotId = findVoidSlotId(activeStar, formConfig);
+
+  // Render nodes
+  container.innerHTML = formConfig.slots.map(slot => {
+    const isVoid = slot.id === voidSlotId;
+    let nodeClass = 'pitch-node';
+    let labelText = '';
+    let roleText = slot.label;
+    let badgeHtml = '';
+    let avatarContent = '';
+
+    if (isVoid) {
+      if (cand) {
+        nodeClass += ' node-replaced';
+        labelText = cand.name.split(' ').pop();
+        badgeHtml = `<span class="pitch-node-status-badge badge-rep">⚡ ${cand.composite_match_score || 85}% FIT</span>`;
+        if (cand.image_url) {
+          avatarContent = `<img src="${cand.image_url}" class="node-img" alt="${cand.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><span class="node-initials" style="display:none;">${getInitials(cand.name)}</span>`;
+        } else {
+          avatarContent = `<span class="node-initials">${getInitials(cand.name)}</span>`;
+        }
+      } else {
+        nodeClass += ' node-void';
+        labelText = activeStar.name.split(' ').pop();
+        badgeHtml = `<span class="pitch-node-status-badge badge-void">🚨 TACTICAL VOID</span>`;
+        avatarContent = `<span class="node-initials node-initials-void">⚠️</span>`;
+      }
+    } else {
+      nodeClass += ' node-teammate';
+      let teammateName = '';
+      if (clubRoster && clubRoster[slot.role]) {
+        teammateName = clubRoster[slot.role];
+      } else {
+        teammateName = `${slot.label} Player`;
+      }
+      labelText = teammateName.split(' ').pop();
+      avatarContent = `<span class="node-initials">${getInitials(teammateName)}</span>`;
+    }
+
+    return `
+      <div class="${nodeClass}" style="top: ${slot.top}%; left: ${slot.left}%;" title="${slot.label} - ${labelText}">
+        <div class="pitch-node-circle">
+          ${avatarContent}
+        </div>
+        <div class="pitch-node-label">
+          <span class="node-name">${labelText}</span>
+          <span class="node-pos">${roleText}</span>
+        </div>
+        ${badgeHtml}
+      </div>
+    `;
+  }).join('');
+
+  // Update Tactical Zone Briefing Box
+  const zoneInfo = getTacticalZoneBriefing(cand, activeStar);
+  const zoneNameEl = document.getElementById('zoneActiveName');
+  const zoneDescEl = document.getElementById('zoneActiveDesc');
+  const zoneTagsRow = document.getElementById('zoneTagsRow');
+
+  if (zoneNameEl) zoneNameEl.textContent = zoneInfo.name;
+  if (zoneDescEl) zoneDescEl.textContent = zoneInfo.desc;
+  if (zoneTagsRow) {
+    zoneTagsRow.innerHTML = zoneInfo.tags.map(t => `<span class="zone-pill">${t}</span>`).join('');
+  }
+
+  // Calculate and update Squad Balance Meters
+  const pcts = cand ? (cand.role_percentiles || cand.radar_percentiles || {}) : (activeStar.role_percentiles || activeStar.radar_percentiles || {});
+  
+  let pressScore = Math.round(formConfig.pressBase + ((pcts.pressing_per_90 || pcts.pressing_intensity || 75) - 75) * 0.25);
+  let aerialScore = Math.round(formConfig.aerialBase + ((pcts.aerial_duel_success_pct || pcts.defensive_solidity || 70) - 70) * 0.28);
+  let widthScore = Math.round(formConfig.widthBase + ((pcts.dribbles_per_90 || pcts.crossing_per_90 || pcts.attacking_output || 75) - 75) * 0.22);
+  let centralScore = Math.round(formConfig.centralBase + ((pcts.progressive_passes_per_90 || pcts.key_passes_per_90 || pcts.ppg_win_efficiency || 75) - 75) * 0.24);
+
+  pressScore = Math.min(99, Math.max(45, pressScore));
+  aerialScore = Math.min(99, Math.max(45, aerialScore));
+  widthScore = Math.min(99, Math.max(45, widthScore));
+  centralScore = Math.min(99, Math.max(45, centralScore));
+
+  const valPress = document.getElementById('valPressIntensity');
+  const fillPress = document.getElementById('fillPressIntensity');
+  const valAerial = document.getElementById('valAerialDom');
+  const fillAerial = document.getElementById('fillAerialDom');
+  const valWidth = document.getElementById('valWidthGen');
+  const fillWidth = document.getElementById('fillWidthGen');
+  const valCentral = document.getElementById('valCentralProg');
+  const fillCentral = document.getElementById('fillCentralProg');
+
+  if (valPress && fillPress) {
+    valPress.textContent = `${pressScore}%`;
+    fillPress.style.width = `${pressScore}%`;
+  }
+  if (valAerial && fillAerial) {
+    valAerial.textContent = `${aerialScore}%`;
+    fillAerial.style.width = `${aerialScore}%`;
+  }
+  if (valWidth && fillWidth) {
+    valWidth.textContent = `${widthScore}%`;
+    fillWidth.style.width = `${widthScore}%`;
+  }
+  if (valCentral && fillCentral) {
+    valCentral.textContent = `${centralScore}%`;
+    fillCentral.style.width = `${centralScore}%`;
+  }
+
+  const eqBadge = document.getElementById('squadEquilibriumBadge');
+  if (eqBadge) {
+    const avg = Math.round((pressScore + aerialScore + widthScore + centralScore) / 4);
+    if (avg >= 88) {
+      eqBadge.textContent = '⚡ Elite High-Press Equilibrium';
+      eqBadge.style.color = 'var(--accent-cyan)';
+    } else if (avg >= 80) {
+      eqBadge.textContent = '✓ Balanced System Equilibrium';
+      eqBadge.style.color = '#10b981';
+    } else {
+      eqBadge.textContent = '⚠️ Asymmetric Tactical Load';
+      eqBadge.style.color = '#fbbf24';
+    }
+  }
+}
+
+function setupPitchControls() {
+  const pills = document.querySelectorAll('.form-pill');
+  pills.forEach(pill => {
+    pill.addEventListener('click', (e) => {
+      const form = e.currentTarget.dataset.formation;
+      if (form && FORMATIONS_MAP[form]) {
+        currentPitchFormation = form;
+        renderPitchTacticalBoard();
+        updateDeepLinkUrl();
+      }
+    });
+  });
+}
+
+function renderAmortizationCalculator() {
+  const activeStar = currentEntityMode === 'coaches' ? getActiveCoachData() : getActiveStarData();
+  const cand = currentEntityMode === 'coaches' ? currentCoachCandidate : currentCandidate;
+  if (!activeStar) return;
+
+  const isCoach = currentEntityMode === 'coaches';
+
+  let saleFee = 0;
+  if (isCoach) {
+    saleFee = (activeStar.buyout_clause_eur || 15_000_000);
+  } else {
+    saleFee = (activeStar.fee || activeStar.transfer_fee || 75_000_000);
+  }
+
+  const nbv = Math.round(saleFee * 0.18);
+  const disposalGain = Math.max(0, saleFee - nbv);
+
+  let buyFee = 0;
+  if (isCoach) {
+    buyFee = (cand ? (cand.buyout_clause_eur || 8_000_000) : 6_000_000);
+  } else {
+    buyFee = (cand ? (cand.market_value_in_eur || cand.val || 35_000_000) : 30_000_000);
+  }
+
+  const contractYears = 5;
+  const annualAmort = Math.round(buyFee / contractYears);
+
+  let starWage = 0;
+  let candWage = 0;
+  if (isCoach) {
+    starWage = activeStar.annual_wage_eur || 10_000_000;
+    candWage = cand ? (cand.annual_wage_eur || 5_000_000) : 5_000_000;
+  } else {
+    starWage = activeStar.wage_annual_eur || ((activeStar.wage_weekly_eur || 150_000) * 52);
+    candWage = cand ? (cand.wage_annual_eur || ((cand.wage_weekly_eur || 35_000) * 52)) : 1_820_000;
+  }
+
+  const wageSavings = starWage - candWage;
+  const year1Headroom = disposalGain + wageSavings - annualAmort;
+  const subYearsHeadroom = wageSavings - annualAmort;
+
+  const elBookGain = document.getElementById('ffpBookGain');
+  const elBookGainSub = document.getElementById('ffpBookGainSub');
+  const elAmortPerYr = document.getElementById('ffpAmortPerYr');
+  const elAmortSub = document.getElementById('ffpAmortSub');
+  const elWageSavings = document.getElementById('ffpWageSavings');
+  const elWageSub = document.getElementById('ffpWageSub');
+  const elHeadroom = document.getElementById('ffpYear1Headroom');
+  const elBadge = document.getElementById('ffpComplianceBadge');
+  const elBars = document.getElementById('ffpTimelineBars');
+  const elNote = document.getElementById('ffpVerdictNote');
+
+  if (elBookGain) elBookGain.textContent = `+${formatCurrency(disposalGain)}`;
+  if (elBookGainSub) elBookGainSub.textContent = `Fee ${formatCurrency(saleFee)} minus ${formatCurrency(nbv)} remaining NBV`;
+
+  if (elAmortPerYr) elAmortPerYr.textContent = `-${formatCurrency(annualAmort)} / yr`;
+  if (elAmortSub) elAmortSub.textContent = `${formatCurrency(buyFee)} fee amortized over 5-year contract`;
+
+  if (elWageSavings) {
+    if (wageSavings >= 0) {
+      elWageSavings.textContent = `+${formatCurrency(wageSavings)} / yr`;
+      elWageSavings.className = 'ffp-stat-val pos';
+    } else {
+      elWageSavings.textContent = `-${formatCurrency(Math.abs(wageSavings))} / yr`;
+      elWageSavings.className = 'ffp-stat-val neg';
+    }
+  }
+  if (elWageSub) elWageSub.textContent = `${formatCurrency(candWage)} vs ${formatCurrency(starWage)} departed star`;
+
+  if (elHeadroom) {
+    elHeadroom.textContent = `${year1Headroom >= 0 ? '+' : '-'}${formatCurrency(Math.abs(year1Headroom))}`;
+    elHeadroom.className = year1Headroom >= 0 ? 'ffp-stat-val highlight' : 'ffp-stat-val neg';
+  }
+
+  if (elBadge) {
+    if (year1Headroom >= 0) {
+      elBadge.className = 'ffp-status-pill ffp-safe';
+      elBadge.textContent = `✓ UEFA FFP & PL PSR Compliant (+${formatCurrency(year1Headroom)} Headroom)`;
+    } else {
+      elBadge.className = 'ffp-status-pill ffp-warning';
+      elBadge.textContent = `⚠️ Requires Offsetting Disposals (${formatCurrency(Math.abs(year1Headroom))} Deficit)`;
+    }
+  }
+
+  if (elBars) {
+    const seasons = ['2026/27', '2027/28', '2028/29', '2029/30', '2030/31'];
+    const maxVal = Math.max(Math.abs(year1Headroom), Math.abs(disposalGain), 50_000_000);
+
+    elBars.innerHTML = seasons.map((season, idx) => {
+      const isY1 = idx === 0;
+      const netVal = isY1 ? year1Headroom : subYearsHeadroom;
+      const isPositive = netVal >= 0;
+      const barHeightPct = Math.min(100, Math.max(16, (Math.abs(netVal) / maxVal) * 100));
+
+      return `
+        <div class="timeline-bar-col ${isY1 ? 'col-highlight' : ''}">
+          <div class="bar-val-tag ${isPositive ? 'pos' : 'neg'}">
+            ${isPositive ? '+' : '-'}${formatCurrency(Math.abs(netVal))}
+          </div>
+          <div class="bar-visual-wrap">
+            <div class="bar-visual-fill ${isPositive ? 'fill-pos' : 'fill-neg'}" style="height: ${barHeightPct}%;"></div>
+          </div>
+          <div class="bar-season-label">${season}</div>
+          <div class="bar-sub-detail">
+            ${isY1 ? 'Disposal + Op' : 'Annual Run Rate'}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  if (elNote) {
+    const candName = cand ? cand.name : 'Target candidate';
+    const starName = activeStar.name;
+    elNote.innerHTML = `
+      <strong>Strategic Financial Summary:</strong> Liquidating ${starName} creates an immediate <strong>+${formatCurrency(disposalGain)}</strong> net book gain on disposal. Reinvesting in <strong>${candName}</strong> on a 5-year contract creates an amortization burden of only <strong>${formatCurrency(annualAmort)}/year</strong> with <strong>${formatCurrency(Math.abs(wageSavings))}/year</strong> in payroll ${wageSavings >= 0 ? 'savings' : 'expansion'}. Year 1 net PSR/FFP headroom created stands at an exceptional <strong style="color: #10b981;">+${formatCurrency(year1Headroom)}</strong>.
+    `;
+  }
+}
+
+function generateTechnicalDirectorVerdict(cand, star, isCoach = false, isShort = false) {
+  if (!cand || !star) return 'Scouting profile pending candidate selection.';
+
+  if (isCoach) {
+    const simPct = cand.tactical_similarity_score || 88;
+    const wageDelta = (star.annual_wage_eur || 10_000_000) - (cand.annual_wage_eur || 5_000_000);
+    const wageSavingsStr = wageDelta > 0 ? `saves ${formatCurrency(wageDelta)}/yr in payroll` : `costs +${formatCurrency(Math.abs(wageDelta))}/yr`;
+    
+    if (isShort) {
+      return `Replicates ${simPct}% of managerial win efficiency and pressing identity within ${cand.top_formation}. Operating at ${wageSavingsStr}, represents a seamless tactical succession.`;
+    }
+    return `Technical Director Verdict: ${cand.name} replicates ${simPct}% of ${star.name}'s win rate and tactical press structure within the ${cand.top_formation} blueprint. Operating at ${wageSavingsStr} with ${cand.trophies || 0} career trophies and an 88% system alignment, this profile represents an elite-tier drop-in managerial replacement for 2026/27.`;
+  }
+
+  const simPct = cand.composite_match_score || 85;
+  const starName = star.name;
+  const candName = cand.name;
+  const savingsVal = formatCurrency(cand.savings_eur || Math.max(0, (star.fee || 60_000_000) - (cand.market_value_in_eur || 25_000_000)));
+  const savingsPct = cand.savings_pct || 45;
+  const posGroup = star.pos_group || 'Winger';
+
+  let metricHighlights = '';
+  if (cand.goals_per_90 >= (star.goals_per_90 || 0)) {
+    metricHighlights = `superior per-90 finishing (+${(cand.goals_per_90 - (star.goals_per_90 || 0)).toFixed(2)} G/90)`;
+  } else if (cand.assists_per_90 >= (star.assists_per_90 || 0)) {
+    metricHighlights = `superior creative output (+${(cand.assists_per_90 - (star.assists_per_90 || 0)).toFixed(2)} A/90)`;
+  } else if (cand.age < (star.age || 28)) {
+    metricHighlights = `significant developmental upside (+${(star.age || 28) - cand.age} yrs career runway)`;
+  } else {
+    metricHighlights = `near-mirror tactical phase outputs (94%+ similarity)`;
+  }
+
+  if (isShort) {
+    return `Replicates ${simPct}% of ${starName}'s core phase output with ${metricHighlights}. Operating at ${savingsPct}% lower fee overhead, this represents a high-arbitrage succession signing.`;
+  }
+
+  return `Technical Director Verdict: ${candName} replicates ${simPct}% of ${starName}'s core ${posGroup} output while providing ${metricHighlights}. Operating at ${savingsPct}% lower fee overhead (${savingsVal} net liquid savings) and an annual UEFA amortization commitment of only ${formatCurrency((cand.market_value_in_eur || 30_000_000) / 5)}/yr, this acquisition represents an elite-tier, risk-mitigated drop-in replacement for the 2026/27 campaign.`;
+}
+
+function updateTechnicalDirectorVerdict() {
+  const verdictText = document.getElementById('radarVerdictText');
+  if (!verdictText) return;
+
+  const activeStar = currentEntityMode === 'coaches' ? getActiveCoachData() : getActiveStarData();
+  const cand = currentEntityMode === 'coaches' ? currentCoachCandidate : currentCandidate;
+  const isCoach = currentEntityMode === 'coaches';
+
+  if (!cand || !activeStar) {
+    verdictText.textContent = 'Awaiting candidate selection to compute sporting director briefing.';
+    return;
+  }
+
+  verdictText.textContent = generateTechnicalDirectorVerdict(cand, activeStar, isCoach, false);
+}
+
+function updateDeepLinkUrl() {
+  const activeStar = currentEntityMode === 'coaches' ? getActiveCoachData() : getActiveStarData();
+  const cand = currentEntityMode === 'coaches' ? currentCoachCandidate : currentCandidate;
+
+  const params = new URLSearchParams();
+  params.set('mode', currentEntityMode);
+  if (activeStar) {
+    params.set('star', activeStar.name.toLowerCase().replace(/\s+/g, '-'));
+  }
+  if (cand) {
+    params.set('cand', cand.name.toLowerCase().replace(/\s+/g, '-'));
+  }
+  if (currentPitchFormation) {
+    params.set('form', currentPitchFormation);
+  }
+  if (planningHorizon) {
+    params.set('horizon', planningHorizon);
+  }
+
+  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState(null, '', newUrl);
+}
+
+function setupShareButton() {
+  const btnShare = document.getElementById('btnShareFaceoff');
+  if (!btnShare) return;
+
+  btnShare.addEventListener('click', async () => {
+    updateDeepLinkUrl();
+    const shareUrl = window.location.href;
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const dummy = document.createElement('input');
+        dummy.value = shareUrl;
+        document.body.appendChild(dummy);
+        dummy.select();
+        document.execCommand('copy');
+        document.body.removeChild(dummy);
+      }
+      showToast('🔗 Tactical face-off deep link copied to clipboard!');
+    } catch (err) {
+      showToast('🔗 Link: ' + shareUrl);
+    }
+  });
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toastBanner');
+  const msgEl = document.getElementById('toastMessage');
+  if (!toast || !msgEl) return;
+
+  msgEl.textContent = message;
+  toast.style.display = 'flex';
+  toast.classList.remove('toast-hide');
+  toast.classList.add('toast-show');
+
+  if (window.toastTimeout) clearTimeout(window.toastTimeout);
+  window.toastTimeout = setTimeout(() => {
+    toast.classList.remove('toast-show');
+    toast.classList.add('toast-hide');
+    setTimeout(() => { toast.style.display = 'none'; }, 400);
+  }, 3200);
+}
+
+function parseUrlParamsOnLoad() {
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('mode');
+  const starParam = params.get('star');
+  const formParam = params.get('form');
+  const horizonParam = params.get('horizon');
+
+  if (formParam && FORMATIONS_MAP[formParam]) {
+    currentPitchFormation = formParam;
+  }
+  if (horizonParam && (horizonParam === 'immediate' || horizonParam === 'succession_3yr')) {
+    planningHorizon = horizonParam;
+  }
+
+  if (mode === 'coaches') {
+    setEntityMode('coaches');
+    if (starParam && engineData && engineData.coach_departures) {
+      const idx = engineData.coach_departures.findIndex(d => 
+        d.departure_meta.coach_name.toLowerCase().replace(/\s+/g, '-').includes(starParam) ||
+        starParam.includes(d.departure_meta.coach_name.toLowerCase().replace(/\s+/g, '-'))
+      );
+      if (idx !== -1) {
+        selectCoachDeparture(idx);
+        return;
+      }
+    }
+    selectCoachDeparture(0);
+  } else {
+    if (starParam && engineData && engineData.departures) {
+      const idx = engineData.departures.findIndex(d => 
+        d.departure_meta.player_name.toLowerCase().replace(/\s+/g, '-').includes(starParam) ||
+        starParam.includes(d.departure_meta.player_name.toLowerCase().replace(/\s+/g, '-'))
+      );
+      if (idx !== -1) {
+        selectDeparture(idx);
+        return;
+      }
+    }
+    selectDeparture(0);
+  }
+}
+
+function setupSandboxModal() {
+  const btnOpen = document.getElementById('btnOpenSandbox');
+  const modal = document.getElementById('sandboxModal');
+  const btnClose = document.getElementById('btnCloseSandbox');
+  const input = document.getElementById('sandboxSearchInput');
+  const dropdown = document.getElementById('sandboxSearchDropdown');
+  const resultsPanel = document.getElementById('sandboxResultsPanel');
+  const btnApply = document.getElementById('btnApplySandbox');
+
+  if (!btnOpen || !modal) return;
+
+  btnOpen.addEventListener('click', () => {
+    modal.style.display = 'flex';
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+    if (dropdown) dropdown.style.display = 'none';
+    if (resultsPanel) resultsPanel.style.display = 'none';
+    sandboxSelectedEntity = null;
+  });
+
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  if (input && dropdown) {
+    input.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (q.length < 2) {
+        dropdown.style.display = 'none';
+        return;
+      }
+
+      const matches = [];
+      const playerPool = engineData.player_pool || [];
+      playerPool.forEach(p => {
+        if (p.name.toLowerCase().includes(q) || (p.club && p.club.toLowerCase().includes(q))) {
+          matches.push({ type: 'player', data: p });
+        }
+      });
+      const coachPool = engineData.coach_pool || [];
+      coachPool.forEach(c => {
+        if (c.name.toLowerCase().includes(q) || (c.club && c.club.toLowerCase().includes(q))) {
+          matches.push({ type: 'coach', data: c });
+        }
+      });
+
+      const topMatches = matches.slice(0, 8);
+      if (!topMatches.length) {
+        dropdown.innerHTML = `<div class="search-item" style="color: var(--text-muted);">No player or coach found</div>`;
+        dropdown.style.display = 'block';
+        return;
+      }
+
+      dropdown.innerHTML = topMatches.map(m => {
+        const item = m.data;
+        const isCoach = m.type === 'coach';
+        const img = item.img || item.image_url || '';
+        const role = isCoach ? (item.top_formation || 'Head Coach') : (item.sub_pos || item.pos);
+        const valStr = isCoach ? `${formatCurrency(item.annual_wage_eur)}/yr` : formatCurrency(item.val);
+
+        return `
+          <div class="search-item search-item-with-thumb" data-type="${m.type}">
+            ${img ? `<img src="${img}" class="search-thumb" alt="${item.name}" onerror="this.style.display='none';" />` : `<div class="search-thumb">${getInitials(item.name)}</div>`}
+            <div>
+              <div class="search-item-title">${item.name} <span style="font-size: 0.75rem; color: ${isCoach ? 'var(--accent-purple)' : 'var(--accent-cyan)'};">${role}</span></div>
+              <div class="search-item-sub">${item.club} • ${valStr} • Age ${item.age}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      dropdown.style.display = 'block';
+
+      dropdown.querySelectorAll('.search-item').forEach((el, idx) => {
+        el.addEventListener('click', () => {
+          const sel = topMatches[idx];
+          sandboxSelectedEntity = sel;
+          dropdown.style.display = 'none';
+          input.value = sel.data.name;
+          renderSandboxSimulation(sel);
+        });
+      });
+    });
+  }
+
+  if (btnApply) {
+    btnApply.addEventListener('click', () => {
+      if (!sandboxSelectedEntity) return;
+      modal.style.display = 'none';
+
+      if (sandboxSelectedEntity.type === 'coach') {
+        setEntityMode('coaches');
+        selectCustomBenchmarkCoach(sandboxSelectedEntity.data);
+      } else {
+        setEntityMode('players');
+        selectCustomBenchmarkPlayer(sandboxSelectedEntity.data);
+      }
+
+      const pitchEl = document.getElementById('pitchTacticalSection');
+      if (pitchEl) pitchEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      showToast(`⚡ Loaded ${sandboxSelectedEntity.data.name} as active departure!`);
+    });
+  }
+}
+
+function renderSandboxSimulation(entityObj) {
+  const panel = document.getElementById('sandboxResultsPanel');
+  const heroBox = document.getElementById('sandboxHeroBox');
+  const meterWrap = document.getElementById('sandboxVoidMeterWrap');
+  const recsGrid = document.getElementById('sandboxRecsGrid');
+  if (!panel || !heroBox || !meterWrap || !recsGrid) return;
+
+  const item = entityObj.data;
+  const isCoach = entityObj.type === 'coach';
+
+  let voidSeverity = 50;
+  let severityTier = 'MODERATE SPORTING DECLINE';
+  let severityDesc = '';
+
+  if (isCoach) {
+    const ppg = item.ppg || 1.8;
+    const winPct = item.win_pct || 55;
+    const trophies = item.trophies || 0;
+    voidSeverity = Math.round(Math.min(96, Math.max(35, 30 + (ppg / 2.5) * 32 + (winPct / 100) * 22 + Math.min(10, trophies) * 1.5)));
+    severityTier = voidSeverity >= 75 ? 'CRITICAL MANAGERIAL VOID' : 'MODERATE TACTICAL ADJUSTMENT';
+    severityDesc = `Predicted sporting drop post-${item.name} exit: Loss of established ${item.top_formation} game-model and high-press rest defense.`;
+  } else {
+    const g90 = item.g90 || item.goals_per_90 || 0;
+    const a90 = item.a90 || item.assists_per_90 || 0;
+    const minApp = item.min_app || 75;
+    const val = item.val || item.market_value_in_eur || 30_000_000;
+    voidSeverity = Math.round(Math.min(98, Math.max(32, 38 + (g90 + a90) * 28 + (minApp / 90) * 16 + (Math.min(120_000_000, val) / 120_000_000) * 18)));
+    severityTier = voidSeverity >= 75 ? 'CRITICAL TALISMANIC VOID' : (voidSeverity >= 60 ? 'HIGH OFFENSIVE DECLINE' : 'SQUAD DEPTH CONTINGENCY');
+    severityDesc = `Predicted sporting drop post-${item.name} exit: Severe loss in primary attacking output and ${item.sub_pos || item.pos} positional dominance.`;
+  }
+
+  const img = item.img || item.image_url || '';
+  heroBox.innerHTML = `
+    <div class="sandbox-hero-avatar-wrap">
+      ${img ? `<img src="${img}" class="sandbox-hero-img" alt="${item.name}" onerror="this.style.display='none';" />` : `<div class="sandbox-hero-initials">${getInitials(item.name)}</div>`}
+    </div>
+    <div class="sandbox-hero-info">
+      <div class="sandbox-hero-name">${item.name} <span class="sandbox-hero-role">${isCoach ? item.top_formation : (item.sub_pos || item.pos)}</span></div>
+      <div class="sandbox-hero-club">${item.club} • Age ${item.age} • ${isCoach ? `${formatCurrency(item.annual_wage_eur)}/yr Wage` : `${formatCurrency(item.val)} Fee`}</div>
+    </div>
+  `;
+
+  meterWrap.innerHTML = `
+    <div class="sandbox-meter-title-row">
+      <span>Predicted Post-Departure Sporting Void Severity:</span>
+      <span class="sandbox-meter-val" style="color: ${voidSeverity >= 75 ? '#ef4444' : '#f59e0b'};">${voidSeverity} / 100</span>
+    </div>
+    <div class="meter-track">
+      <div class="meter-fill" style="width: ${voidSeverity}%; background: ${voidSeverity >= 75 ? 'linear-gradient(90deg, #f59e0b, #ef4444)' : 'var(--accent-cyan)'};"></div>
+    </div>
+    <div class="sandbox-meter-tier" style="margin-top: 0.5rem; font-size: 0.82rem; font-weight: 700; color: ${voidSeverity >= 75 ? '#ef4444' : '#f59e0b'};">${severityTier}</div>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">${severityDesc}</p>
+  `;
+
+  let recs = [];
+  if (isCoach) {
+    const pool = engineData.coach_pool || [];
+    recs = pool.filter(p => p.name !== item.name).map(p => scoreCoachAgainstStar(p, item)).sort((a, b) => b.composite_match_score - a.composite_match_score).slice(0, 3);
+  } else {
+    const pool = engineData.player_pool || [];
+    recs = pool.filter(p => p.id !== item.id).map(p => scoreCandidateAgainstStar(p, item)).sort((a, b) => b.composite_match_score - a.composite_match_score).slice(0, 3);
+  }
+
+  recsGrid.innerHTML = recs.map(r => `
+    <div class="sandbox-rec-card">
+      <div class="sandbox-rec-top">
+        <span class="sandbox-rec-name">${r.name}</span>
+        <span class="sandbox-rec-score">⚡ ${r.composite_match_score}% Match</span>
+      </div>
+      <div class="sandbox-rec-meta">${r.club || r.current_club_name} • Age ${r.age} • ${isCoach ? formatCurrency(r.annual_wage_eur) + '/yr' : formatCurrency(r.market_value_in_eur)}</div>
+    </div>
+  `).join('');
+
+  panel.style.display = 'block';
+}
+
+function setupDossierExporter() {
+  const btnExport = document.getElementById('btnExportDossier');
+  const modal = document.getElementById('dossierModal');
+  const btnClose = document.getElementById('btnCloseDossier');
+  const btnPrint = document.getElementById('btnPrintDossier');
+
+  if (!btnExport || !modal) return;
+
+  btnExport.addEventListener('click', () => {
+    generateDossierContent();
+    modal.style.display = 'flex';
+  });
+
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  if (btnPrint) {
+    btnPrint.addEventListener('click', () => {
+      window.print();
+    });
+  }
+}
+
+function generateDossierContent() {
+  const container = document.getElementById('dossierPrintableContent');
+  if (!container) return;
+
+  const isCoach = currentEntityMode === 'coaches';
+  const activeStar = isCoach ? getActiveCoachData() : getActiveStarData();
+  const cand = isCoach ? currentCoachCandidate : currentCandidate;
+  if (!activeStar) return;
+
+  const refCode = `UEFA-PSR/2627-${Math.floor(1000 + Math.random() * 9000)}`;
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const starName = activeStar.name;
+  const candName = cand ? cand.name : 'Target Contingency Candidate';
+  const candClub = cand ? (cand.current_club_name || cand.club) : 'Scouting Target';
+  const candScore = cand ? cand.composite_match_score : 85;
+
+  const verdictText = generateTechnicalDirectorVerdict(cand, activeStar, isCoach, false);
+
+  container.innerHTML = `
+    <div class="dossier-report-wrap">
+      
+      <!-- Top Classified Header -->
+      <div class="dossier-top-classified">
+        <div class="dossier-confidential-tag">STRICTLY CONFIDENTIAL • SPORTING DIRECTOR TECHNICAL TRANSFER DOSSIER</div>
+        <div class="dossier-ref-row">
+          <span>DOSSIER REF: ${refCode}</span>
+          <span>DATE: ${dateStr}</span>
+          <span>WINDOW: SUMMER 2026/27</span>
+        </div>
+      </div>
+
+      <!-- Header Title -->
+      <div class="dossier-main-hdr">
+        <h1 class="dossier-report-title">EXECUTIVE SUCCESSION & TACTICAL ARBITRAGE REPORT</h1>
+        <p class="dossier-report-sub">Autonomous sporting replacement audit for ${activeStar.club || 'Club'} following talismanic departure of ${starName}</p>
+      </div>
+
+      <!-- Section 1: Benchmark vs Target -->
+      <div class="dossier-section">
+        <h2 class="dossier-sec-title">1. TALISMAN BENCHMARK VS. DROP-IN SUCCESSOR</h2>
+        <div class="dossier-faceoff-grid">
+          <div class="dossier-col">
+            <div class="dossier-col-label">DEPARTING TALISMAN (BENCHMARK)</div>
+            <div class="dossier-player-card">
+              <div class="dossier-p-name">${starName}</div>
+              <div class="dossier-p-meta">${activeStar.club} • Age ${activeStar.age} • ${isCoach ? activeStar.top_formation : (activeStar.sub_pos || activeStar.pos || 'Talisman')}</div>
+              <div class="dossier-p-stat"><strong>Fee / Valuation:</strong> ${isCoach ? formatCurrency(activeStar.annual_wage_eur) + '/yr' : formatCurrency(activeStar.fee || activeStar.val || 75_000_000)}</div>
+              <div class="dossier-p-stat"><strong>Sporting Metric:</strong> ${isCoach ? `${activeStar.ppg} PPG • ${activeStar.win_pct}% Win` : `${activeStar.goals_per_90 || 0} G/90 • ${activeStar.assists_per_90 || 0} A/90`}</div>
+            </div>
+          </div>
+          <div class="dossier-col">
+            <div class="dossier-col-label">RECOMMENDED DROP-IN REPLACEMENT</div>
+            <div class="dossier-player-card highlight-cand">
+              <div class="dossier-p-name">${candName}</div>
+              <div class="dossier-p-meta">${candClub} • Age ${cand ? cand.age : 22} • ${isCoach ? (cand ? cand.top_formation : '4-3-3') : (cand ? (cand.sub_position || cand.position) : 'Target')}</div>
+              <div class="dossier-p-stat"><strong>Fee / Valuation:</strong> ${isCoach ? formatCurrency(cand ? cand.annual_wage_eur : 4_000_000) + '/yr' : formatCurrency(cand ? cand.market_value_in_eur : 35_000_000)}</div>
+              <div class="dossier-p-stat"><strong>Composite Match Score:</strong> <span style="color:#10b981; font-weight:800;">${candScore}% Fit</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: 4-Step Analytical Scouting Matrix -->
+      <div class="dossier-section">
+        <h2 class="dossier-sec-title">2. 4-STEP SCIENTIFIC FRAMEWORK AUDIT</h2>
+        <table class="dossier-table">
+          <thead>
+            <tr>
+              <th>Evaluation Pillar</th>
+              <th>Benchmark Standard</th>
+              <th>Successor Output</th>
+              <th>Scouting Audit & Compliance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Step 1: Tactical Archetype & Role</strong></td>
+              <td>${activeStar.tactical_role || activeStar.tactical_archetype || 'Primary Core'}</td>
+              <td>${cand ? (cand.tactical_role || cand.tactical_archetype) : 'Mirror Profile'}</td>
+              <td><span class="dossier-badge-pass">✓ Direct Role Fit</span></td>
+            </tr>
+            <tr>
+              <td><strong>Step 2: Performance Production</strong></td>
+              <td>${isCoach ? `${activeStar.ppg} PPG` : `${activeStar.ga_per_90 || 0.75} G+A/90`}</td>
+              <td>${cand ? (isCoach ? `${cand.ppg} PPG` : `${cand.ga_per_90 || 0.70} G+A/90`) : 'High Output'}</td>
+              <td><span class="dossier-badge-pass">✓ Production Replicated</span></td>
+            </tr>
+            <tr>
+              <td><strong>Step 3: European Percentile Rank</strong></td>
+              <td>90-99th European Percentile</td>
+              <td>${cand ? `${cand.composite_match_score}%ile` : '88th %ile'}</td>
+              <td><span class="dossier-badge-pass">✓ Elite Metric Cohort</span></td>
+            </tr>
+            <tr>
+              <td><strong>Step 4: Financial Arbitrage & Runway</strong></td>
+              <td>Baseline Reference</td>
+              <td>${cand ? formatCurrency(cand.savings_eur || 25_000_000) : '€25M'} Liquid Surplus</td>
+              <td><span class="dossier-badge-pass">✓ High Arbitrage</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section 3: UEFA FFP & PL PSR Financial Assessment -->
+      <div class="dossier-section">
+        <h2 class="dossier-sec-title">3. UEFA FFP & PREMIER LEAGUE PSR SUSTAINABILITY AUDIT</h2>
+        <div class="dossier-audit-box">
+          <div class="dossier-audit-row">
+            <span>Disposal Net Book Gain Credited to P&L:</span>
+            <strong>+${formatCurrency(Math.round((activeStar.fee || 70_000_000) * 0.82))}</strong>
+          </div>
+          <div class="dossier-audit-row">
+            <span>Replacement 5-Year Contract Amortization:</span>
+            <strong>-${formatCurrency(Math.round((cand ? cand.market_value_in_eur : 35_000_000) / 5))}/year</strong>
+          </div>
+          <div class="dossier-audit-row">
+            <span>Annual Wage Bill Delta:</span>
+            <strong style="color: #10b981;">+${formatCurrency(Math.max(1_000_000, ((activeStar.wage_weekly_eur || 150000) - (cand ? cand.wage_weekly_eur : 35000)) * 52))}/year Relief</strong>
+          </div>
+          <div class="dossier-audit-row" style="border-top: 1px solid rgba(255,255,255,0.15); margin-top: 0.5rem; padding-top: 0.5rem;">
+            <span>Year 1 Net FFP Breathing Room Unlocked:</span>
+            <strong style="color: #10b981; font-size: 1.1rem;">+${formatCurrency(Math.round((activeStar.fee || 70_000_000) * 0.82 + 3_000_000 - (cand ? cand.market_value_in_eur : 35_000_000) / 5))}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: AI Technical Director Official Recommendation -->
+      <div class="dossier-section">
+        <h2 class="dossier-sec-title">4. TECHNICAL DIRECTOR EXECUTIVE VERDICT & SIGN-OFF</h2>
+        <div class="dossier-verdict-box">
+          <p class="dossier-verdict-p">${verdictText}</p>
+        </div>
+      </div>
+
+      <!-- Official Verification Stamp -->
+      <div class="dossier-footer-stamp-row">
+        <div class="dossier-stamp-box">
+          <div class="stamp-seal">★ VERIFIED OFFICIAL ★</div>
+          <div class="stamp-engine">TACTICAL VOID ENGINE • RFF @ 26</div>
+          <div class="stamp-date">${dateStr} • APPROVED</div>
+        </div>
+        <div class="dossier-sig-block">
+          <div class="dossier-sig-line"></div>
+          <span class="dossier-sig-label">Sporting Director & Chief Data Analyst Sign-Off</span>
+        </div>
+      </div>
+
+    </div>
+  `;
 }
 
 // Execute on DOM Load

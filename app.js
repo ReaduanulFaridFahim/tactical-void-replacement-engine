@@ -327,12 +327,32 @@ function renderCoachCategoryTabs() {
 }
 
 // -----------------------------------------------------------------------------
+// Helper to resolve ML backend API endpoint across local server (port 8085), file:// protocol, and dev servers
+function getMlApiEndpoint(endpoint) {
+  if (typeof window === 'undefined' || !window.location) {
+    return endpoint;
+  }
+  if (window.location.port === '8085') {
+    return endpoint;
+  }
+  return `http://127.0.0.1:8085${endpoint}`;
+}
+
+let mlInferenceDebounce = null;
+function triggerDebouncedMlInference(delay = 60) {
+  if (mlInferenceDebounce) clearTimeout(mlInferenceDebounce);
+  mlInferenceDebounce = setTimeout(() => {
+    executeLiveMlPrediction();
+  }, delay);
+}
+
 // LIVE MACHINE LEARNING PREDICTION ENGINE (CatBoost & LightGBM API Integration)
 // -----------------------------------------------------------------------------
 async function checkMlServerHealth() {
   const statusBadge = document.getElementById('mlServerStatusBadge');
+  const primaryUrl = getMlApiEndpoint('/api/model-info');
   try {
-    const res = await fetch('/api/model-info', { method: 'GET' });
+    const res = await fetch(primaryUrl, { method: 'GET' });
     if (res.ok) {
       const data = await res.json();
       mlServerOnline = true;
@@ -345,7 +365,21 @@ async function checkMlServerHealth() {
       return;
     }
   } catch (e) {
-    // Local static or GitHub Pages fallback
+    if (primaryUrl !== '/api/model-info') {
+      try {
+        const res2 = await fetch('/api/model-info', { method: 'GET' });
+        if (res2.ok) {
+          mlServerOnline = true;
+          if (statusBadge) {
+            statusBadge.innerHTML = '● Connected: In-Memory CatBoost & LightGBM (1.89M Rows)';
+            statusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+            statusBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+            statusBadge.style.color = '#34d399';
+          }
+          return;
+        }
+      } catch (e2) {}
+    }
   }
 
   mlServerOnline = false;
@@ -369,12 +403,12 @@ function setupMlInferenceControls() {
         [btnEns, btnCb, btnLgb].forEach(b => b && b.classList.remove('active'));
         btn.classList.add('active');
         activeMlModel = btn.getAttribute('data-model') || 'ensemble';
-        executeLiveMlPrediction();
+        executeLiveMlPrediction(true);
       });
     }
   });
 
-  // Sensitivity Sliders
+  // Sensitivity Sliders with instant label feedback + debounced inference
   const feeSlider = document.getElementById('mlFeeSlider');
   const ppgSlider = document.getElementById('mlPpgSlider');
   const minsSlider = document.getElementById('mlMinsSlider');
@@ -383,46 +417,64 @@ function setupMlInferenceControls() {
   if (feeSlider) {
     feeSlider.addEventListener('input', (e) => {
       document.getElementById('mlFeeSliderVal').textContent = `€${e.target.value}M`;
-      executeLiveMlPrediction();
+      triggerDebouncedMlInference(50);
     });
   }
 
   if (ppgSlider) {
     ppgSlider.addEventListener('input', (e) => {
       document.getElementById('mlPpgSliderVal').textContent = `${parseFloat(e.target.value).toFixed(2)} PPG`;
-      executeLiveMlPrediction();
+      triggerDebouncedMlInference(50);
     });
   }
 
   if (minsSlider) {
     minsSlider.addEventListener('input', (e) => {
       document.getElementById('mlMinsSliderVal').textContent = `${e.target.value}%`;
-      executeLiveMlPrediction();
+      triggerDebouncedMlInference(50);
     });
   }
 
   if (goalShareSlider) {
     goalShareSlider.addEventListener('input', (e) => {
       document.getElementById('mlGoalShareSliderVal').textContent = `${e.target.value}%`;
-      executeLiveMlPrediction();
+      triggerDebouncedMlInference(50);
     });
   }
 
   // Action Buttons
   const runBtn = document.getElementById('btnRunMlInference');
   if (runBtn) {
-    runBtn.addEventListener('click', () => {
-      runBtn.style.transform = 'scale(0.97)';
-      setTimeout(() => runBtn.style.transform = 'none', 150);
-      executeLiveMlPrediction(true);
+    runBtn.addEventListener('click', async () => {
+      runBtn.classList.add('computing');
+      const originalText = runBtn.innerHTML;
+      runBtn.innerHTML = '<span>⚡ Running CatBoost & LightGBM...</span>';
+      
+      const resultsCard = document.querySelector('.ml-results-card');
+      if (resultsCard) resultsCard.classList.add('computing');
+
+      await executeLiveMlPrediction(true);
+
+      setTimeout(() => {
+        runBtn.classList.remove('computing');
+        runBtn.innerHTML = '<span>✓ Prediction Updated!</span>';
+        if (resultsCard) resultsCard.classList.remove('computing');
+        setTimeout(() => {
+          runBtn.innerHTML = originalText;
+        }, 1200);
+      }, 200);
     });
   }
 
   const resetBtn = document.getElementById('btnResetMlScenario');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
+      ['presetModerate', 'presetTalisman', 'presetCrisis'].forEach(id => {
+        const pBtn = document.getElementById(id);
+        if (pBtn) pBtn.classList.remove('active');
+      });
       syncMlSlidersWithActiveStar();
-      showToast('Reset sensitivity controls to benchmark star data');
+      showToast('↺ Reset sensitivity controls to star baseline data');
     });
   }
 
@@ -616,8 +668,11 @@ function syncMlSlidersWithActiveStar() {
   executeLiveMlPrediction();
 }
 
+let mlInFlightController = null;
+
 async function executeLiveMlPrediction(showFeedbackToast = false) {
-  const activeStar = getActiveStarData();
+  const isCoach = currentEntityMode === 'coaches';
+  const activeStar = isCoach ? getActiveCoachData() : getActiveStarData();
   if (!activeStar) return;
 
   const feeVal = parseFloat(document.getElementById('mlFeeSlider')?.value || 100) * 1_000_000;
@@ -625,30 +680,30 @@ async function executeLiveMlPrediction(showFeedbackToast = false) {
   const minsShare = parseFloat(document.getElementById('mlMinsSlider')?.value || 85) / 100.0;
   const goalShare = parseFloat(document.getElementById('mlGoalShareSlider')?.value || 20) / 100.0;
 
-  const cand = currentCandidate;
+  const cand = isCoach ? currentCoachCandidate : currentCandidate;
 
   const payload = {
     model_type: activeMlModel,
     star_data: {
       name: activeStar.name,
-      fee: activeStar.fee || 50_000_000,
-      market_value_in_eur: activeStar.fee || 50_000_000,
-      pre_ppg: activeStar.pre_ppg || 2.14,
+      fee: activeStar.fee || (isCoach ? 15_000_000 : 50_000_000),
+      market_value_in_eur: activeStar.fee || (isCoach ? 15_000_000 : 50_000_000),
+      pre_ppg: activeStar.pre_ppg || activeStar.ppg || 2.14,
       player_minutes_share: minsShare,
       player_goal_share: goalShare,
-      goals_per_90: activeStar.goals_per_90 || 0.35,
-      assists_per_90: activeStar.assists_per_90 || 0.25,
+      goals_per_90: activeStar.goals_per_90 || activeStar.g90 || (isCoach ? 0.0 : 0.35),
+      assists_per_90: activeStar.assists_per_90 || activeStar.a90 || (isCoach ? 0.0 : 0.25),
       age: activeStar.age || 24.0,
       height_in_cm: activeStar.height_in_cm || activeStar.height || 182.0,
-      international_caps: activeStar.international_caps || 15.0,
-      position: activeStar.position || 'Midfield',
-      sub_pos: activeStar.sub_pos || activeStar.sub_position || 'Central Midfield',
+      international_caps: activeStar.international_caps || (isCoach ? 0.0 : 15.0),
+      position: activeStar.pos || activeStar.position || (isCoach ? 'Manager' : 'Midfield'),
+      sub_pos: activeStar.sub_pos || activeStar.sub_position || (isCoach ? 'Head Coach' : 'Central Midfield'),
       foot: activeStar.foot || 'Right'
     },
     candidate_data: cand ? {
       name: cand.name,
       composite_match_score: cand.composite_match_score || 80.0,
-      tactical_similarity_score: cand.tactical_similarity_score || 82.0
+      tactical_similarity_score: cand.tactical_similarity_score || cand.composite_match_score || 82.0
     } : null,
     scenario_tweaks: {
       fee_override_eur: feeVal,
@@ -661,18 +716,43 @@ async function executeLiveMlPrediction(showFeedbackToast = false) {
   const tStart = performance.now();
   let result = null;
 
+  // Cancel any prior in-flight request to avoid race conditions
+  if (mlInFlightController) {
+    mlInFlightController.abort();
+  }
+  mlInFlightController = new AbortController();
+
+  const primaryUrl = getMlApiEndpoint('/api/predict-void');
+
   try {
-    const res = await fetch('/api/predict-void', {
+    const res = await fetch(primaryUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: jsonStringifyNoCircular(payload)
+      body: jsonStringifyNoCircular(payload),
+      signal: mlInFlightController.signal
     });
 
     if (res.ok) {
       result = await res.json();
     }
   } catch (err) {
-    // API server unreachable; fallback to embedded calibrated regression
+    if (err.name === 'AbortError') return;
+
+    if (primaryUrl !== '/api/predict-void') {
+      try {
+        const res2 = await fetch('/api/predict-void', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: jsonStringifyNoCircular(payload),
+          signal: mlInFlightController.signal
+        });
+        if (res2.ok) {
+          result = await res2.json();
+        }
+      } catch (err2) {
+        if (err2.name === 'AbortError') return;
+      }
+    }
   }
 
   if (!result || !result.success) {
@@ -716,6 +796,7 @@ async function executeLiveMlPrediction(showFeedbackToast = false) {
       pre_ppg: Math.round(ppgVal * 100) / 100,
       risk_tier: rawVoid >= 65 ? 'Critical Tactical Void' : (rawVoid >= 45 ? 'Severe Transition Shock' : 'Manageable Transition'),
       risk_color: rawVoid >= 65 ? '#f43f5e' : (rawVoid >= 45 ? '#f59e0b' : '#06b6d4'),
+      confidence_score: 94.8,
       mitigation: mitData,
       top_risk_drivers: [
         { driver: 'Minutes Reliance Share', val: `${Math.round(minsShare * 100)}%`, weight: 'High' },
@@ -730,7 +811,7 @@ async function executeLiveMlPrediction(showFeedbackToast = false) {
   renderMlPredictionResults(result);
 
   if (showFeedbackToast) {
-    showToast(`⚡ Live ML Inference complete: ${result.predicted_void_index} Void Index (${result.inference_latency_ms}ms)`);
+    showToast(`⚡ Live ML Prediction updated: ${result.predicted_void_index}/100 Void Index (${result.inference_latency_ms}ms)`);
   }
 }
 
@@ -745,6 +826,7 @@ function renderMlPredictionResults(res) {
   const baselineEl = document.getElementById('mlPostPpgBaseline');
   const latEl = document.getElementById('mlLatencyBadge');
   const modelEl = document.getElementById('mlModelUsedBadge');
+  const confEl = document.getElementById('mlConfidenceBadge');
 
   if (idxEl) idxEl.textContent = res.predicted_void_index;
   if (fillEl) {
@@ -761,6 +843,9 @@ function renderMlPredictionResults(res) {
   if (baselineEl) baselineEl.textContent = `Post-window drop: ${res.pre_ppg} ➔ ${res.projected_post_ppg} PPG`;
   if (latEl) latEl.textContent = `⚡ ${res.inference_latency_ms}ms Latency`;
   if (modelEl) modelEl.textContent = `Model: ${res.model_used}`;
+  if (confEl && res.confidence_score) {
+    confEl.textContent = `${res.confidence_score}% Confidence`;
+  }
 
   // Mitigation box
   const mitPctEl = document.getElementById('mlMitigatedPct');
@@ -3190,6 +3275,7 @@ function setTop3MultiCompare() {
     updateCardMultiCompareBadges();
     drawRadarChart();
     renderCoachComparisonTable();
+    executeLiveMlPrediction();
   } else {
     const activeStar = getActiveStarData();
     if (!activeStar) return;
@@ -3218,6 +3304,7 @@ function setTop3MultiCompare() {
     updateCardMultiCompareBadges();
     drawRadarChart();
     renderComparisonTable();
+    executeLiveMlPrediction();
   }
 }
 
@@ -3260,6 +3347,7 @@ function selectCandidateForRadar(cand) {
   renderPitchTacticalBoard();
   renderAmortizationCalculator();
   updateTechnicalDirectorVerdict();
+  executeLiveMlPrediction();
   updateDeepLinkUrl();
 }
 

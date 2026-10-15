@@ -133,6 +133,56 @@
       </div>
     </section>
 
+    <!-- Pareto Optimal Efficiency Frontier Section -->
+    <section class="pareto-section" id="paretoSection" aria-label="Pareto Optimal Efficiency Frontier">
+      <div class="pareto-header-bar">
+        <div>
+          <h2 class="section-title">Pareto Optimal Efficiency Frontier (Non-Dominated Set)</h2>
+          <p class="section-subtitle">
+            Visualizing the mathematical trade-off boundary between Tactical Compatibility (%) and 5-Year Amortized Financial Cost. Identifies non-dominated arbitrage targets.
+          </p>
+        </div>
+        <div class="pareto-action-btns">
+          <button class="pareto-toggle-btn active" id="btnToggleParetoOnly">
+            <span>💎 Highlight Non-Dominated Frontier</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pareto-stats-banner">
+        <div class="pareto-stat-item">
+          <span class="pareto-stat-lbl">NON-DOMINATED PARETO TARGETS</span>
+          <div class="pareto-stat-num" id="paretoStatOptimalCount">4 Candidates</div>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Optimal efficiency boundary</span>
+        </div>
+        <div class="pareto-stat-item">
+          <span class="pareto-stat-lbl">MAX TRANSFER FEE ARBITRAGE</span>
+          <div class="pareto-stat-num" id="paretoStatMaxArbitrage">€82.0M</div>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Liquidated fee vs. top match</span>
+        </div>
+        <div class="pareto-stat-item">
+          <span class="pareto-stat-lbl">ARBITRAGE GOLD ZONE REPLICATION</span>
+          <div class="pareto-stat-num" style="color: #10b981;">91.4% Avg</div>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">Tactical vector fidelity</span>
+        </div>
+      </div>
+
+      <div class="pareto-canvas-box">
+        <canvas id="paretoCanvas" width="900" height="400"></canvas>
+        <div class="pareto-tooltip" id="paretoTooltip"></div>
+      </div>
+
+      <div class="pareto-legend-bar">
+        <div><span class="pareto-legend-dot" style="background: #06b6d4; box-shadow: 0 0 8px #06b6d4;"></span> <strong>Pareto Optimal Frontier (Non-Dominated)</strong></div>
+        <div><span class="pareto-legend-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span> <strong>Arbitrage Gold Zone (High Match, Low Cost)</strong></div>
+        <div><span class="pareto-legend-dot" style="background: #64748b;"></span> <strong>Dominated Candidates (Suboptimal Trade-off)</strong></div>
+      </div>
+
+      <div class="mc-summary-box" style="margin-top: 1.2rem;" id="paretoSummaryText">
+        <strong>Strategic Scouting Note:</strong> The glowing cyan curve represents the Pareto Optimal Frontier. Candidates lying on this frontier cannot be surpassed in tactical compatibility without incurring higher 5-year amortized expenditure, nor can they be matched at lower cost.
+      </div>
+    </section>
+
     <!-- 4-Step Player Replacement Analysis Framework Walkthrough Card -->
     <section class="framework-stepper-card" id="frameworkCard">
       <div class="framework-stepper-header">

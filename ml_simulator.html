@@ -255,7 +255,85 @@
       </div>
     </section>
 
-    
+    <!-- Monte Carlo League Tournament & UCL Probability Simulator -->
+    <section class="monte-carlo-section" id="monteCarloSection" aria-label="Monte Carlo League Simulator">
+      <div class="mc-header-row">
+        <div>
+          <div class="mc-badge-tags">
+            <span class="mc-chip mc-chip-stochastic">🎲 STOCHASTIC TOURNAMENT SIMULATOR</span>
+            <span class="mc-chip mc-chip-iter">10,000 ITERATIONS</span>
+          </div>
+          <h2 class="section-title">Monte Carlo 38-Fixture League & UEFA Revenue Simulator</h2>
+          <p class="section-subtitle">
+            Stochastically models 10,000 full-season tournament permutations to determine title win odds, Champions League qualification, and broadcasting revenue delta under post-departure void vs. scouted replacement.
+          </p>
+        </div>
+      </div>
+
+      <div class="mc-grid">
+        <!-- Controls Column -->
+        <div class="mc-controls-panel">
+          <div class="mc-control-group">
+            <div class="mc-label-row">
+              <span>Simulation Iterations:</span>
+              <span class="mc-val-badge" id="mcSimCountSliderVal">10,000 Runs</span>
+            </div>
+            <input type="range" class="range-slider" id="mcSimCountSlider" min="1000" max="10000" step="1000" value="10000">
+          </div>
+
+          <div class="mc-control-group">
+            <div class="mc-label-row">
+              <span>Pre-Departure Baseline Points:</span>
+              <span class="mc-val-badge" id="mcTargetPtsSliderVal">82 Pts</span>
+            </div>
+            <input type="range" class="range-slider" id="mcTargetPtsSlider" min="60" max="98" step="1" value="82">
+          </div>
+
+          <button class="mc-run-btn" id="btnRunMonteCarlo">
+            <span>🎲 Run 10,000-Iteration Simulation</span>
+          </button>
+        </div>
+
+        <!-- Results & Canvas Column -->
+        <div class="mc-results-panel">
+          <div class="mc-kpi-grid">
+            <div class="mc-kpi-card">
+              <span class="mc-kpi-lbl">EXPECTED POINTS</span>
+              <div class="mc-kpi-val" id="mcMeanPts">81.2 Pts</div>
+              <span class="mc-kpi-sub">95% CI: [75 - 87 pts]</span>
+            </div>
+            <div class="mc-kpi-card">
+              <span class="mc-kpi-lbl">TITLE WIN PROB.</span>
+              <div class="mc-kpi-val color-success" id="mcTitleProb">28.6%</div>
+              <span class="mc-kpi-sub">+25.4% over void</span>
+            </div>
+            <div class="mc-kpi-card">
+              <span class="mc-kpi-lbl">UCL TOP-4 PROB.</span>
+              <div class="mc-kpi-val color-cyan" id="mcUclProb">88.4%</div>
+              <span class="mc-kpi-sub">+44.3% mitigation</span>
+            </div>
+            <div class="mc-kpi-card">
+              <span class="mc-kpi-lbl">REVENUE IMPACT</span>
+              <div class="mc-kpi-val" id="mcRevenueDelta">+€73.7M</div>
+              <span class="mc-kpi-sub">Prize & UEFA broad.</span>
+            </div>
+          </div>
+
+          <div class="mc-chart-box">
+            <div class="mc-chart-title">
+              <span>📈 38-Game Points Distribution Density (10,000 Iterations)</span>
+              <span style="font-size: 0.78rem; color: var(--text-secondary);">Amber: Unmitigated Void | Cyan: Replaced</span>
+            </div>
+            <canvas id="monteCarloCanvas" width="700" height="240"></canvas>
+          </div>
+
+          <div class="mc-summary-box" id="mcSummaryNote">
+            <strong>Executive Briefing:</strong> Recapturing tactical output via the scouted drop-in replacement elevates Top-4 Champions League qualification probability from <strong>44.1%</strong> to <strong>88.4%</strong>, preserving an estimated <strong>€73.7M</strong> in UEFA competition prize money and broadcasting distributions.
+          </div>
+        </div>
+      </div>
+    </section>
+
 <!-- What-If Custom Departure Sandbox Modal -->
     <div class="modal-overlay" id="sandboxModal" style="display: none;">
       <div class="modal-box">

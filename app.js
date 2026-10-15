@@ -198,6 +198,8 @@ async function initApp() {
     checkMlServerHealth();
     setupDossierExporter();
     setupShareButton();
+    setupMonteCarloSimulator();
+    setupParetoFrontier();
     renderPlayerCategoryTabs();
     renderDepartureChips();
     setupFreeScrollExperience();
@@ -2349,6 +2351,8 @@ function renderRecommendations() {
   renderPitchTacticalBoard();
   renderAmortizationCalculator();
   updateTechnicalDirectorVerdict();
+  renderParetoFrontier(filtered, activeStar);
+  runMonteCarloSimulation();
 }
 
 // Get the active benchmark coach profile
@@ -3407,6 +3411,8 @@ function selectCandidateForRadar(cand) {
   renderAmortizationCalculator();
   updateTechnicalDirectorVerdict();
   executeLiveMlPrediction();
+  renderParetoFrontier();
+  runMonteCarloSimulation();
   updateDeepLinkUrl();
 }
 
@@ -5633,5 +5639,498 @@ function generateDossierContent() {
   `;
 }
 
+/* ==========================================================================
+   MONTE CARLO LEAGUE TOURNAMENT & STOCHASTIC SIMULATOR
+   ========================================================================== */
+let isParetoOnlyMode = false;
+let currentParetoCandidates = [];
+
+function setupMonteCarloSimulator() {
+  const btnRun = document.getElementById('btnRunMonteCarlo');
+  if (btnRun) {
+    btnRun.addEventListener('click', () => {
+      runMonteCarloSimulation();
+    });
+  }
+
+  const sliderRuns = document.getElementById('mcSimCountSlider');
+  const lblRuns = document.getElementById('mcSimCountSliderVal');
+  if (sliderRuns && lblRuns) {
+    sliderRuns.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      lblRuns.textContent = `${val.toLocaleString()} Runs`;
+      runMonteCarloSimulation();
+    });
+  }
+
+  const sliderPts = document.getElementById('mcTargetPtsSlider');
+  const lblPts = document.getElementById('mcTargetPtsSliderVal');
+  if (sliderPts && lblPts) {
+    sliderPts.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      lblPts.textContent = `${val} Pts`;
+      runMonteCarloSimulation();
+    });
+  }
+}
+
+function runMonteCarloSimulation() {
+  const canvas = document.getElementById('monteCarloCanvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const sliderRuns = document.getElementById('mcSimCountSlider');
+  const numIterations = sliderRuns ? parseInt(sliderRuns.value) || 10000 : 10000;
+
+  const sliderPts = document.getElementById('mcTargetPtsSlider');
+  const baselinePts = sliderPts ? parseInt(sliderPts.value) || 82 : 82;
+  const baselinePpg = baselinePts / 38;
+
+  // Compute expected PPG for unmitigated void vs with candidate
+  const activeStar = getActiveStarData();
+  const dep = engineData && engineData.departures ? engineData.departures[currentDepartureIndex] : null;
+  const voidDeltas = dep && dep.void_analysis ? dep.void_analysis.deltas : { delta_ppg: -0.41 };
+  const voidDeltaPpg = voidDeltas.delta_ppg || -0.41;
+
+  // Candidate mitigation
+  const candMatch = currentCandidate ? (currentCandidate.composite_match_score || 85) / 100 : 0.85;
+  const candDeltaPpg = voidDeltaPpg * (1 - candMatch);
+
+  const voidTargetPpg = Math.max(0.6, baselinePpg + voidDeltaPpg);
+  const candTargetPpg = Math.max(0.8, baselinePpg + candDeltaPpg);
+
+  // Run Monte Carlo: simulate N seasons of 38 matches
+  const voidResults = [];
+  const candResults = [];
+
+  let voidTitles = 0;
+  let candTitles = 0;
+  let voidTop4 = 0;
+  let candTop4 = 0;
+
+  function randomNormal(mean, std) {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return mean + std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  }
+
+  const stdPerSeason = 5.8;
+  for (let i = 0; i < numIterations; i++) {
+    const vPts = Math.min(105, Math.max(25, Math.round(randomNormal(voidTargetPpg * 38, stdPerSeason))));
+    const cPts = Math.min(108, Math.max(30, Math.round(randomNormal(candTargetPpg * 38, stdPerSeason * 0.95))));
+
+    voidResults.push(vPts);
+    candResults.push(cPts);
+
+    if (vPts >= 86) voidTitles++;
+    if (cPts >= 86) candTitles++;
+    if (vPts >= 71) voidTop4++;
+    if (cPts >= 71) candTop4++;
+  }
+
+  const candMean = candResults.reduce((a, b) => a + b, 0) / numIterations;
+  const voidMean = voidResults.reduce((a, b) => a + b, 0) / numIterations;
+
+  const titleProbPct = ((candTitles / numIterations) * 100).toFixed(1);
+  const uclProbPct = ((candTop4 / numIterations) * 100).toFixed(1);
+  const voidUclProbPct = ((voidTop4 / numIterations) * 100).toFixed(1);
+
+  const ptsDelta = candMean - voidMean;
+  const revDelta = Math.round(((candTop4 - voidTop4) / numIterations) * 70 + (ptsDelta * 1.5));
+
+  const elMean = document.getElementById('mcMeanPts');
+  if (elMean) elMean.textContent = `${candMean.toFixed(1)} Pts`;
+
+  const elTitle = document.getElementById('mcTitleProb');
+  if (elTitle) elTitle.textContent = `${titleProbPct}%`;
+
+  const elUcl = document.getElementById('mcUclProb');
+  if (elUcl) elUcl.textContent = `${uclProbPct}%`;
+
+  const elRev = document.getElementById('mcRevenueDelta');
+  if (elRev) elRev.textContent = `+€${revDelta}M`;
+
+  const elNote = document.getElementById('mcSummaryNote');
+  if (elNote) {
+    const starName = activeStar ? activeStar.name : 'Departed Star';
+    const candName = currentCandidate ? currentCandidate.name : 'Target Replacement';
+    elNote.innerHTML = `<strong>Strategic Tournament Briefing:</strong> Replacing <strong>${starName}</strong> with <strong>${candName}</strong> elevates Top-4 Champions League qualification probability from <strong>${voidUclProbPct}%</strong> to <strong>${uclProbPct}%</strong> (+${(uclProbPct - voidUclProbPct).toFixed(1)}% recovery), protecting an estimated <strong>+€${revDelta}M</strong> in competition prize money and European broadcasting allocations.`;
+  }
+
+  // Draw Dual Probability Density Histogram on Canvas
+  const width = canvas.width;
+  const height = canvas.height;
+  ctx.clearRect(0, 0, width, height);
+
+  const minPts = 45;
+  const maxPts = 105;
+  const buckets = maxPts - minPts;
+  const voidCounts = new Array(buckets).fill(0);
+  const candCounts = new Array(buckets).fill(0);
+
+  for (let i = 0; i < numIterations; i++) {
+    const vIdx = Math.max(0, Math.min(buckets - 1, voidResults[i] - minPts));
+    const cIdx = Math.max(0, Math.min(buckets - 1, candResults[i] - minPts));
+    voidCounts[vIdx]++;
+    candCounts[cIdx]++;
+  }
+
+  const maxCount = Math.max(...voidCounts, ...candCounts);
+
+  // Draw Grid lines
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.lineWidth = 1;
+  for (let p = 50; p <= 100; p += 10) {
+    const x = ((p - minPts) / buckets) * (width - 80) + 40;
+    ctx.beginPath();
+    ctx.moveTo(x, 20);
+    ctx.lineTo(x, height - 30);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${p} pts`, x, height - 12);
+  }
+
+  // Draw UCL Qualification threshold line (71 pts)
+  const uclX = ((71 - minPts) / buckets) * (width - 80) + 40;
+  ctx.strokeStyle = 'rgba(6, 182, 212, 0.7)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(uclX, 15);
+  ctx.lineTo(uclX, height - 30);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#06b6d4';
+  ctx.font = 'bold 10px Inter, sans-serif';
+  ctx.fillText('UCL Cutoff (71 pts)', uclX, 12);
+
+  // Draw Void Curve (Amber)
+  ctx.beginPath();
+  ctx.strokeStyle = '#f59e0b';
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+  ctx.lineWidth = 2.5;
+  for (let b = 0; b < buckets; b++) {
+    const x = (b / buckets) * (width - 80) + 40;
+    const y = (height - 30) - (voidCounts[b] / maxCount) * (height - 60);
+    if (b === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.lineTo(((buckets - 1) / buckets) * (width - 80) + 40, height - 30);
+  ctx.lineTo(40, height - 30);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw Candidate Curve (Cyan)
+  ctx.beginPath();
+  ctx.strokeStyle = '#06b6d4';
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.25)';
+  ctx.lineWidth = 2.5;
+  for (let b = 0; b < buckets; b++) {
+    const x = (b / buckets) * (width - 80) + 40;
+    const y = (height - 30) - (candCounts[b] / maxCount) * (height - 60);
+    if (b === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.lineTo(((buckets - 1) / buckets) * (width - 80) + 40, height - 30);
+  ctx.lineTo(40, height - 30);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/* ==========================================================================
+   PARETO OPTIMAL EFFICIENCY FRONTIER VISUALIZER
+   ========================================================================== */
+function setupParetoFrontier() {
+  const btn = document.getElementById('btnToggleParetoOnly');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      isParetoOnlyMode = !isParetoOnlyMode;
+      btn.classList.toggle('active', isParetoOnlyMode);
+      btn.innerHTML = isParetoOnlyMode
+        ? '<span>✓ Showing Non-Dominated Only</span>'
+        : '<span>💎 Highlight Non-Dominated Frontier</span>';
+      renderParetoFrontier();
+    });
+  }
+
+  const canvas = document.getElementById('paretoCanvas');
+  const tooltip = document.getElementById('paretoTooltip');
+  if (!canvas || !tooltip) return;
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+    let hovered = null;
+    let minDist = 18;
+
+    currentParetoCandidates.forEach(item => {
+      const dist = Math.hypot(item.canvasX - mouseX, item.canvasY - mouseY);
+      if (dist < minDist) {
+        minDist = dist;
+        hovered = item;
+      }
+    });
+
+    if (hovered) {
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${(hovered.canvasX / canvas.width) * 100}%`;
+      tooltip.style.top = `${(hovered.canvasY / canvas.height) * 100}%`;
+      tooltip.innerHTML = `
+        <div style="font-weight: 800; font-size: 0.95rem; color: #ffffff;">${hovered.name}</div>
+        <div style="font-size: 0.78rem; color: var(--accent-cyan); margin-bottom: 0.35rem;">${hovered.current_club_name || 'Free Agent'}</div>
+        <div style="display: flex; justify-content: space-between; gap: 1rem; font-size: 0.76rem;">
+          <span>Tactical Match:</span><strong>${hovered.matchScore}%</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 1rem; font-size: 0.76rem;">
+          <span>5-Yr Amortized Cost:</span><strong>€${hovered.cost5yr.toFixed(1)}M</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 1rem; font-size: 0.76rem;">
+          <span>Transfer Valuation:</span><strong>€${(hovered.market_value_in_eur / 1e6).toFixed(1)}M</strong>
+        </div>
+        <div style="margin-top: 0.4rem; padding-top: 0.35rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; color: ${hovered.isPareto ? '#06b6d4' : '#94a3b8'};">
+          ${hovered.isPareto ? '★ Non-Dominated Pareto Target' : 'Dominated Trade-off'} (Click to Select)
+        </div>
+      `;
+    } else {
+      tooltip.style.display = 'none';
+    }
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+    let clicked = null;
+    let minDist = 22;
+
+    currentParetoCandidates.forEach(item => {
+      const dist = Math.hypot(item.canvasX - mouseX, item.canvasY - mouseY);
+      if (dist < minDist) {
+        minDist = dist;
+        clicked = item;
+      }
+    });
+
+    if (clicked && clicked.originalCandidate) {
+      selectCandidateForRadar(clicked.originalCandidate);
+    }
+  });
+}
+
+function renderParetoFrontier(candidates, activeStar) {
+  const canvas = document.getElementById('paretoCanvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  if (!candidates) {
+    const activeStarData = getActiveStarData();
+    if (!activeStarData) return;
+    const dep = engineData && engineData.departures ? engineData.departures[currentDepartureIndex] : null;
+    candidates = dep ? (planningHorizon === 'succession_3yr' && dep.succession_recommendations && dep.succession_recommendations.length ? dep.succession_recommendations : dep.recommendations) : [];
+  }
+
+  if (!candidates || candidates.length === 0) return;
+  const star = activeStar || getActiveStarData() || {};
+
+  const parsed = candidates.map(c => {
+    const feeM = (c.market_value_in_eur || 30_000_000) / 1e6;
+    const wageAnnualM = ((c.wage_weekly_eur || 35_000) * 52) / 1e6;
+    const cost5yr = feeM + (wageAnnualM * 5);
+    const matchScore = c.composite_match_score || 80;
+    return {
+      ...c,
+      feeM,
+      cost5yr,
+      matchScore,
+      originalCandidate: c,
+    };
+  });
+
+  parsed.sort((a, b) => a.cost5yr - b.cost5yr);
+
+  let maxScoreSoFar = -1;
+  const paretoPoints = [];
+
+  parsed.forEach(p => {
+    if (p.matchScore > maxScoreSoFar) {
+      p.isPareto = true;
+      maxScoreSoFar = p.matchScore;
+      paretoPoints.push(p);
+    } else {
+      p.isPareto = false;
+    }
+  });
+
+  currentParetoCandidates = parsed;
+
+  const elOptCount = document.getElementById('paretoStatOptimalCount');
+  if (elOptCount) elOptCount.textContent = `${paretoPoints.length} Candidates`;
+
+  const starFeeM = (star.fee || 70_000_000) / 1e6;
+  const minCostCandidate = paretoPoints[0];
+  const maxArbitrage = minCostCandidate ? Math.max(0, starFeeM - minCostCandidate.feeM) : 45;
+  const elMaxArb = document.getElementById('paretoStatMaxArbitrage');
+  if (elMaxArb) elMaxArb.textContent = `€${maxArbitrage.toFixed(1)}M`;
+
+  const elSummary = document.getElementById('paretoSummaryText');
+  if (elSummary && paretoPoints.length > 0) {
+    const topPick = paretoPoints[paretoPoints.length - 1];
+    elSummary.innerHTML = `<strong>Strategic Pareto Analysis:</strong> The mathematical frontier contains <strong>${paretoPoints.length} non-dominated targets</strong>. The peak efficiency choice is <strong>${topPick.name}</strong> delivering <strong>${topPick.matchScore}% tactical replication</strong> at a 5-year cost of <strong>€${topPick.cost5yr.toFixed(1)}M</strong>, yielding <strong>€${(starFeeM - topPick.feeM).toFixed(1)}M</strong> in immediate liquidated fee arbitrage.`;
+  }
+
+  const width = canvas.width;
+  const height = canvas.height;
+  ctx.clearRect(0, 0, width, height);
+
+  const padLeft = 60;
+  const padRight = 50;
+  const padTop = 30;
+  const padBottom = 50;
+
+  const minX = 10;
+  const maxX = Math.max(120, Math.ceil(Math.max(...parsed.map(p => p.cost5yr)) / 20) * 20);
+  const minY = 60;
+  const maxY = 100;
+
+  function toCanvasX(cost) {
+    return padLeft + ((cost - minX) / (maxX - minX)) * (width - padLeft - padRight);
+  }
+  function toCanvasY(match) {
+    return (height - padBottom) - ((match - minY) / (maxY - minY)) * (height - padTop - padBottom);
+  }
+
+  parsed.forEach(p => {
+    p.canvasX = toCanvasX(p.cost5yr);
+    p.canvasY = toCanvasY(p.matchScore);
+  });
+
+  const gzX1 = padLeft;
+  const gzX2 = toCanvasX(Math.min(maxX, 65));
+  const gzY1 = toCanvasY(100);
+  const gzY2 = toCanvasY(88);
+
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+  ctx.fillRect(gzX1, gzY1, gzX2 - gzX1, gzY2 - gzY1);
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
+  ctx.setLineDash([3, 3]);
+  ctx.strokeRect(gzX1, gzY1, gzX2 - gzX1, gzY2 - gzY1);
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.6)';
+  ctx.font = 'bold 11px Inter, sans-serif';
+  ctx.fillText('ARBITRAGE GOLD ZONE (High Match, Low Cost)', gzX1 + 10, gzY1 + 20);
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+  ctx.lineWidth = 1;
+
+  for (let c = 20; c <= maxX; c += 20) {
+    const x = toCanvasX(c);
+    ctx.beginPath();
+    ctx.moveTo(x, padTop);
+    ctx.lineTo(x, height - padBottom);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`€${c}M`, x, height - padBottom + 18);
+  }
+
+  for (let m = 60; m <= 100; m += 10) {
+    const y = toCanvasY(m);
+    ctx.beginPath();
+    ctx.moveTo(padLeft, y);
+    ctx.lineTo(width - padRight, y);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${m}%`, padLeft - 10, y + 4);
+  }
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.font = 'bold 12px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('5-Year Amortized Expenditure (€ Millions: Fee + 5-Yr Wages)', padLeft + (width - padLeft - padRight) / 2, height - 10);
+
+  ctx.save();
+  ctx.translate(16, padTop + (height - padTop - padBottom) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Tactical Vector Match Score (%)', 0, 0);
+  ctx.restore();
+
+  if (paretoPoints.length > 1) {
+    ctx.beginPath();
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = 'rgba(6, 182, 212, 0.8)';
+    ctx.shadowBlur = 10;
+
+    paretoPoints.forEach((p, idx) => {
+      if (idx === 0) ctx.moveTo(p.canvasX, p.canvasY);
+      else ctx.lineTo(p.canvasX, p.canvasY);
+    });
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  parsed.forEach(p => {
+    if (isParetoOnlyMode && !p.isPareto) return;
+
+    const isCurrent = currentCandidate && currentCandidate.player_id === p.player_id;
+
+    ctx.beginPath();
+    if (isCurrent) {
+      ctx.arc(p.canvasX, p.canvasY, 11, 0, Math.PI * 2);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    const radius = p.isPareto ? 7 : 5;
+    ctx.arc(p.canvasX, p.canvasY, radius, 0, Math.PI * 2);
+
+    if (p.isPareto) {
+      ctx.fillStyle = p.matchScore >= 88 && p.cost5yr <= 65 ? '#10b981' : '#06b6d4';
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowBlur = 8;
+    } else {
+      ctx.fillStyle = '#64748b';
+      ctx.shadowBlur = 0;
+    }
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    if (p.isPareto || isCurrent) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(p.name, p.canvasX + 10, p.canvasY - 4);
+    }
+  });
+}
+
 // Execute on DOM Load
 document.addEventListener('DOMContentLoaded', initApp);
+

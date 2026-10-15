@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UEFA FFP & PL PSR Financial Audit - Tactical Replacement Engine</title>
+  <meta name="description" content="Quantifying post-departure tactical voids and recommending budget-compliant drop-in tactical replacements using Transfermarkt data.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    
+    <!-- Top Hero Header -->
+    <header class="hero-header">
+      <div class="hero-badge-wrap">
+        <span class="engine-badge" id="engineStatusBadge">The Tactical Void & Drop-In Replacement Engine</span>
+        <span class="engine-badge" style="border-color: rgba(139,92,246,0.35); color: var(--accent-purple);" id="engineSubBadge">1.89M Player Appearances • 176K Manager Matches</span>
+      </div>
+
+      <!-- Entity Mode Switcher: Player Mode vs Head Coach Mode -->
+      <div class="mode-switcher-container">
+        <button class="mode-tab-btn active" id="btnModePlayers" title="Scout drop-in replacements for departing star footballers">
+          <span class="mode-tab-icon">⚽</span>
+          <span class="mode-tab-text">Player Replacement Engine</span>
+          <span class="mode-tab-pill" id="pillPlayerCount">44 Dossiers</span>
+        </button>
+        <button class="mode-tab-btn" id="btnModeCoaches" title="Scout drop-in replacements for departing head coaches & managers">
+          <span class="mode-tab-icon">👔</span>
+          <span class="mode-tab-text">Manager & Head Coach Engine</span>
+          <span class="mode-tab-pill coach-pill" id="pillCoachCount">16 Dossiers</span>
+        </button>
+      </div>
+
+      <h1 class="hero-title" id="mainHeroTitle">The Tactical Void & Drop-In Replacement Engine</h1>
+      <p class="hero-subtitle" id="mainHeroSubtitle">
+        Quantifying the sporting decline left behind when superstar talents depart, and recommending optimal, budget-compliant drop-in replacements through multi-dimensional tactical vector similarity.
+      </p>
+
+      <!-- Executive Action Controls Bar -->
+            <div class="executive-actions-bar">
+        <button class="exec-btn" id="btnOpenSandbox" title="Simulate custom hypothetical departures for any player or coach">
+          <span>🧪 What-If Sandbox</span>
+        </button>
+        <button class="exec-btn" id="btnShareFaceoff" title="Copy sharable deep link to this tactical comparison">
+          <span>🔗 Share Comparison</span>
+        </button>
+        <button class="exec-btn exec-btn-accent" id="btnExportDossier" title="Generate and download club executive scouting dossier (PDF)">
+          <span>📄 Export Scouting Dossier</span>
+        </button>
+      </div>
+    </header>
+
+<!-- Search & Horizon Planning Control Bar -->
+    <div class="player-search-wrap">
+      <div class="search-input-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="playerSearchInput" placeholder="Search any player to scout replacements (e.g. Salah, De Bruyne, Saka, Yamal, Messi, Mbappe)..." autocomplete="off">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+      <div class="horizon-toggle-bar">
+        <button class="horizon-btn active" id="btnHorizonImmediate" title="Immediate replacements ready to start right now">
+          <span>⚡ Immediate Like-for-Like</span>
+        </button>
+        <button class="horizon-btn" id="btnHorizonSuccession" title="Young emerging talents aged 17-23 to groom over 2-3 seasons">
+          <span>🔮 2-3 Year Succession Horizon</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Marquee Departure & Succession Dossiers Selector Track -->
+    <section class="departure-section" aria-label="Marquee Transfers & Succession Dossiers">
+      <div class="section-label-bar">
+        <div class="category-tabs-track" id="categoryTabsTrack">
+          <button class="cat-tab-btn active" id="tabAll">All Dossiers (44)</button>
+          <button class="cat-tab-btn" id="tabSeason2627">🔥 26/27 Season Departures (12)</button>
+          <button class="cat-tab-btn" id="tabHistorical">Historical Departures (13)</button>
+          <button class="cat-tab-btn" id="tabSuccession">Succession Planning (19)</button>
+        </div>
+        <span id="transferCountLabel" style="font-size: 0.8rem; color: var(--accent-cyan); font-weight: 700;">44 High-Impact Dossiers</span>
+      </div>
+      <div class="player-chips-track" id="departureChipsTrack">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </section>
+
+    
+<!-- UEFA FFP & Premier League PSR Amortization Calculator Section -->
+    <section class="ffp-section" id="ffpSection" aria-label="FFP and PSR Financial Amortization Audit">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-title">
+            <span>💰 UEFA FFP & Premier League PSR Amortization Calculator</span>
+          </h2>
+          <div class="card-subtext" id="ffpSubtext">
+            Simulating 5-year contract book disposal gains, replacement amortization schedules, and net FFP headroom
+          </div>
+        </div>
+        <div class="ffp-status-pill ffp-safe" id="ffpComplianceBadge">
+          ✓ UEFA FFP & PL PSR Fully Compliant
+        </div>
+      </div>
+
+      <div class="ffp-grid">
+        <!-- 4 Key Financial Metrics -->
+        <div class="ffp-stat-card">
+          <span class="ffp-stat-lbl">Liquidated Sale Book Gain (P&L Credit)</span>
+          <div class="ffp-stat-val pos" id="ffpBookGain">+€105.0M</div>
+          <span class="ffp-stat-sub" id="ffpBookGainSub">Fee €127.0M minus €22.0M NBV</span>
+        </div>
+
+        <div class="ffp-stat-card">
+          <span class="ffp-stat-lbl">Replacement 5-Year Amortization</span>
+          <div class="ffp-stat-val neg" id="ffpAmortPerYr">-€7.6M / yr</div>
+          <span class="ffp-stat-sub" id="ffpAmortSub">€38.0M fee over 5-year contract</span>
+        </div>
+
+        <div class="ffp-stat-card">
+          <span class="ffp-stat-lbl">Annual Wage Bill Arbitrage</span>
+          <div class="ffp-stat-val pos" id="ffpWageSavings">+€6.9M / yr</div>
+          <span class="ffp-stat-sub" id="ffpWageSub">€4.5M vs €11.4M departed star</span>
+        </div>
+
+        <div class="ffp-stat-card">
+          <span class="ffp-stat-lbl">Year 1 Net FFP Headroom Unlocked</span>
+          <div class="ffp-stat-val highlight" id="ffpYear1Headroom">+€104.3M</div>
+          <span class="ffp-stat-sub">Immediate liquidity margin unlocked</span>
+        </div>
+      </div>
+
+      <!-- 5-Year Financial P&L Timeline Projection Table/Chart -->
+      <div class="ffp-timeline-box">
+        <h3 class="timeline-title">📈 5-Year Net P&L Amortization Timeline (€ Millions)</h3>
+        <div class="timeline-bars-grid" id="ffpTimelineBars">
+          <!-- Dynamically generated 5 year bars via JavaScript -->
+        </div>
+        <div class="ffp-verdict-note" id="ffpVerdictNote">
+          <strong>Strategic Financial Summary:</strong> Liquidating this star unlocks massive immediate accounting relief. Reinvesting in the target drop-in replacement on a 5-year contract leaves the club with <strong>+€104.3M</strong> in Year 1 FFP breathing room.
+        </div>
+      </div>
+    </section>
+
+    <!-- Methodological & Mathematical Dossier -->
+    <section class="dossier-card">
+      <h3 class="dossier-title">📐 Methodology & Algorithmic Architecture</h3>
+      <p>
+        Traditional football scouting relies on subjective scout reports or static FIFA ratings. The Tactical Void Engine operates on two novel mathematical layers:
+      </p>
+
+      <div class="dossier-grid">
+        <div class="dossier-item">
+          <h4>1. Tactical Void Quantification</h4>
+          <p>
+            Measures the difference in club points-per-game, goal creation, and defensive collapse across an empirical 25-game window pre- and post-departure.
+          </p>
+          <code class="dossier-code">Void Index = 50 - 22(ΔPPG) - 0.35(ΔWin%) - 15(ΔGF) + 12(ΔGA)</code>
+        </div>
+
+        <div class="dossier-item">
+          <h4>2. Cosine Vector Embeddings</h4>
+          <p>
+            Encodes player performance into normalized per-90 vectors covering goal creation, playmaking, minute durability, and physical profile.
+          </p>
+          <code class="dossier-code">CosSim(A, B) = (A · B) / (||A|| · ||B||)</code>
+        </div>
+
+        <div class="dossier-item">
+          <h4>3. Transfer Arbitrage Optimization</h4>
+          <p>
+            Calculates financial efficiency by identifying candidates who deliver 90%+ tactical compatibility while costing only a fraction of the liquidated fee.
+          </p>
+          <code class="dossier-code">Savings = Fee_Received - Candidate_Valuation</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dedicated Application Footer: RFF @ 26 -->
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <div class="footer-brand-col">
+          <div class="footer-logo">
+            <span class="footer-logo-icon">⚡</span>
+            <span class="footer-logo-text">The Tactical Void & Drop-In Replacement Engine</span>
+          </div>
+          <p class="footer-tagline">
+            Empirical Sporting Continuity, Vector Similarity & Arbitrage Scouting Platform
+          </p>
+        </div>
+
+        <div class="footer-signature-col">
+          <div class="footer-sig-badge">
+            <span class="sig-prefix">ENGINEERED BY</span>
+            <span class="sig-name">RFF @ 26</span>
+          </div>
+          <div class="footer-meta-info">
+            <span>Transfermarkt Pro Analytics</span>
+            <span>•</span>
+            <span>Season 2026/27 Edition</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    
+<!-- What-If Custom Departure Sandbox Modal -->
+    <div class="modal-overlay" id="sandboxModal" style="display: none;">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span style="font-size: 1.4rem;">🧪</span>
+            <div>
+              <h3 class="modal-title">What-If Departure Simulation Sandbox</h3>
+              <p class="modal-sub">Simulate hypothetical departures for ANY player or coach across European football</p>
+            </div>
+          </div>
+          <button class="modal-close-btn" id="btnCloseSandbox" aria-label="Close Sandbox Modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="sandbox-search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="sandbox-search-input" id="sandboxSearchInput" placeholder="Search ANY player or coach to simulate (e.g. Saka, Musiala, Rodri, Saliba, Yamal, Arteta)..." autocomplete="off">
+            <div class="search-dropdown" id="sandboxSearchDropdown"></div>
+          </div>
+
+          <div class="sandbox-results-panel" id="sandboxResultsPanel" style="display: none;">
+            <div class="sandbox-hero-box" id="sandboxHeroBox"></div>
+            <div class="sandbox-void-meter-wrap" id="sandboxVoidMeterWrap"></div>
+            <div class="sandbox-recs-title">🎯 Instant Recommended Drop-In Replacements:</div>
+            <div class="sandbox-recs-grid" id="sandboxRecsGrid"></div>
+            <button class="sandbox-apply-btn" id="btnApplySandbox">🚀 Load as Active Departure in Dashboard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Executive Scouting Dossier Printable Modal -->
+    <div class="modal-overlay" id="dossierModal" style="display: none;">
+      <div class="modal-box dossier-modal-box">
+        <div class="modal-header no-print">
+          <div class="modal-title-wrap">
+            <span style="font-size: 1.4rem;">📄</span>
+            <div>
+              <h3 class="modal-title">Official Club Executive Scouting Dossier</h3>
+              <p class="modal-sub">Confidential Sporting Director Technical Transfer Briefing</p>
+            </div>
+          </div>
+          <div class="modal-actions-right">
+            <button class="dossier-print-btn" id="btnPrintDossier">🖨️ Print / Save as PDF</button>
+            <button class="modal-close-btn" id="btnCloseDossier" aria-label="Close Dossier Modal">&times;</button>
+          </div>
+        </div>
+
+        <div class="dossier-printable-content" id="dossierPrintableContent">
+          <!-- Dynamically populated executive briefing report via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div class="toast-banner" id="toastBanner" style="display: none;">
+      <span class="toast-icon">⚡</span>
+      <span class="toast-message" id="toastMessage">Link copied to clipboard!</span>
+    </div>
+
+    <!-- Floating Back to Top Button -->
+    <button class="btn-back-to-top" id="btnBackToTop" title="Scroll back to top (or press Home)" aria-label="Back to top">
+      <span>↑</span>
+    </button>
+
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

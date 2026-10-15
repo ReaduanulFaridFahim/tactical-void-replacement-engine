@@ -165169,7 +165169,7 @@ window.TACTICAL_ENGINE_DATA = {
   ],
   "coach_pool": [
     {
-      "id": 221677,
+      "id": 160964,
       "name": "Diego Simeone",
       "club": "Atlético de Madrid",
       "age": 55,
@@ -165211,7 +165211,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 381514,
+      "id": 872322,
       "name": "Pep Guardiola",
       "club": "Manchester City",
       "age": 54,
@@ -165253,7 +165253,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 773365,
+      "id": 216746,
       "name": "Unai Emery",
       "club": "Aston Villa",
       "age": 54,
@@ -165295,7 +165295,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 775605,
+      "id": 221173,
       "name": "José Mourinho",
       "club": "SL Benfica",
       "age": 48,
@@ -165337,7 +165337,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 628516,
+      "id": 891543,
       "name": "Brendan Rodgers",
       "club": "Al-Qadsiah Saudi Football Club",
       "age": 48,
@@ -165379,7 +165379,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 687987,
+      "id": 606953,
       "name": "Jürgen Klopp",
       "club": "Global Head of Soccer (Red Bull)",
       "age": 58,
@@ -165421,7 +165421,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 594818,
+      "id": 878001,
       "name": "Carlo Ancelotti",
       "club": "Real Madrid",
       "age": 66,
@@ -165463,7 +165463,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 758336,
+      "id": 636740,
       "name": "Gian Piero Gasperini",
       "club": "Atalanta BC",
       "age": 67,
@@ -165505,7 +165505,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 788449,
+      "id": 206457,
       "name": "Ernesto Valverde",
       "club": "Athletic Bilbao",
       "age": 48,
@@ -165547,7 +165547,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 304062,
+      "id": 647966,
       "name": "Manuel Pellegrini",
       "club": "Real Betis Balompié",
       "age": 48,
@@ -165589,7 +165589,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 685798,
+      "id": 532988,
       "name": "Massimiliano Allegri",
       "club": "Free Agent",
       "age": 58,
@@ -165631,7 +165631,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 629813,
+      "id": 60701,
       "name": "Paulo Fonseca",
       "club": "Olympique Lyon",
       "age": 48,
@@ -165673,7 +165673,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 261794,
+      "id": 862384,
       "name": "Sérgio Conceição",
       "club": "Free Agent",
       "age": 50,
@@ -165715,7 +165715,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 433303,
+      "id": 305914,
       "name": "Peter Bosz",
       "club": "PSV Eindhoven",
       "age": 48,
@@ -165757,7 +165757,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 514039,
+      "id": 858605,
       "name": "Stefano Pioli",
       "club": "ACF Fiorentina",
       "age": 48,
@@ -165799,7 +165799,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 543388,
+      "id": 149391,
       "name": "Simone Inzaghi",
       "club": "Inter Milan",
       "age": 49,
@@ -165841,7 +165841,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 16378,
+      "id": 433689,
       "name": "Jorge Jesus",
       "club": "Al-Nassr Football Club",
       "age": 48,
@@ -165883,7 +165883,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 627980,
+      "id": 928392,
       "name": "Antonio Conte",
       "club": "SSC Napoli",
       "age": 56,
@@ -165925,7 +165925,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 801445,
+      "id": 192276,
       "name": "Maurizio Sarri",
       "club": "Società Sportiva Lazio S.p.A.",
       "age": 48,
@@ -165967,7 +165967,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 86489,
+      "id": 364965,
       "name": "Derek McInnes",
       "club": "Heart of Midlothian FC",
       "age": 48,
@@ -166009,7 +166009,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 40076,
+      "id": 68575,
       "name": "Mauricio Pochettino",
       "club": "USMNT",
       "age": 53,
@@ -166051,7 +166051,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 277232,
+      "id": 214828,
       "name": "Christophe Galtier",
       "club": "Neom Sports Club",
       "age": 48,
@@ -166093,7 +166093,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 134744,
+      "id": 471001,
       "name": "Thomas Tuchel",
       "club": "England National Team",
       "age": 51,
@@ -166135,7 +166135,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 333308,
+      "id": 614362,
       "name": "Erik ten Hag",
       "club": "Free Agent",
       "age": 55,
@@ -166177,7 +166177,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 794409,
+      "id": 45362,
       "name": "Marcelino",
       "club": "Villarreal CF",
       "age": 48,
@@ -166219,7 +166219,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 367551,
+      "id": 301635,
       "name": "David Moyes",
       "club": "Everton FC",
       "age": 48,
@@ -166261,7 +166261,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 824195,
+      "id": 367644,
       "name": "Răzvan Lucescu",
       "club": "Panthessalonikios Athlitikos Omilos Konstantinoupoliton",
       "age": 48,
@@ -166303,7 +166303,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 323326,
+      "id": 925121,
       "name": "John van den Brom",
       "club": "FC Twente Enschede",
       "age": 48,
@@ -166345,7 +166345,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 542129,
+      "id": 19227,
       "name": "Luis Enrique",
       "club": "Paris Saint-Germain",
       "age": 55,
@@ -166387,7 +166387,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 933319,
+      "id": 348704,
       "name": "Marco Silva",
       "club": "Fulham FC",
       "age": 48,
@@ -166429,7 +166429,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 471716,
+      "id": 66294,
       "name": "Nuno Espírito Santo",
       "club": "West Ham United",
       "age": 48,
@@ -166471,7 +166471,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 963188,
+      "id": 697539,
       "name": "Pedro Martins",
       "club": "Olympiakos Syndesmos Filathlon Peiraios",
       "age": 48,
@@ -166513,7 +166513,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 294156,
+      "id": 264198,
       "name": "Sergey Semak",
       "club": "AO FK Zenit Sankt-Peterburg",
       "age": 48,
@@ -166555,7 +166555,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 428410,
+      "id": 54189,
       "name": "Christian Streich",
       "club": "SC Freiburg",
       "age": 48,
@@ -166597,7 +166597,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 629368,
+      "id": 336526,
       "name": "Luciano Spalletti",
       "club": "Juventus FC",
       "age": 48,
@@ -166639,7 +166639,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 1018,
+      "id": 867672,
       "name": "José Luis Mendilibar",
       "club": "Olympiakos Syndesmos Filathlon Peiraios",
       "age": 48,
@@ -166681,7 +166681,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 274382,
+      "id": 397565,
       "name": "Okan Buruk",
       "club": "Galatasaray",
       "age": 48,
@@ -166723,7 +166723,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 532101,
+      "id": 324042,
       "name": "Eddie Howe",
       "club": "Newcastle United",
       "age": 48,
@@ -166765,7 +166765,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 21893,
+      "id": 113603,
       "name": "Jess Thorup",
       "club": "FC Augsburg",
       "age": 48,
@@ -166807,7 +166807,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 219833,
+      "id": 350104,
       "name": "Hein Vanhaezebrouck",
       "club": "KAA Gent",
       "age": 48,
@@ -166849,7 +166849,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 426754,
+      "id": 992726,
       "name": "Roger Schmidt",
       "club": "SL Benfica",
       "age": 48,
@@ -166891,7 +166891,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 521357,
+      "id": 780104,
       "name": "Rudi Garcia",
       "club": "Top Flight Club",
       "age": 48,
@@ -166933,7 +166933,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 477676,
+      "id": 391581,
       "name": "Ron Jans",
       "club": "FC Utrecht",
       "age": 48,
@@ -166975,7 +166975,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 951020,
+      "id": 668322,
       "name": "Míchel",
       "club": "Girona FC",
       "age": 48,
@@ -167017,7 +167017,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 870506,
+      "id": 234165,
       "name": "Mircea Lucescu",
       "club": "Dynamo Kyiv",
       "age": 48,
@@ -167059,7 +167059,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 397072,
+      "id": 779694,
       "name": "Leonardo Jardim",
       "club": "Clube de Regatas do Flamengo",
       "age": 48,
@@ -167101,7 +167101,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 130175,
+      "id": 81763,
       "name": "Mikel Arteta",
       "club": "Arsenal FC",
       "age": 43,
@@ -167143,7 +167143,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 341195,
+      "id": 464678,
       "name": "Niko Kovac",
       "club": "Borussia Dortmund",
       "age": 48,
@@ -167185,7 +167185,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 275572,
+      "id": 280755,
       "name": "Eusebio Di Francesco",
       "club": "US Lecce",
       "age": 48,
@@ -167227,7 +167227,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 322843,
+      "id": 281481,
       "name": "Vincenzo Montella",
       "club": "Top Flight Club",
       "age": 48,
@@ -167269,7 +167269,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 439327,
+      "id": 969114,
       "name": "Abdullah Avcı",
       "club": "Trabzonspor",
       "age": 48,
@@ -167311,7 +167311,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 523670,
+      "id": 7146,
       "name": "Lucien Favre",
       "club": "OGC Nice",
       "age": 48,
@@ -167353,7 +167353,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 302808,
+      "id": 233281,
       "name": "Kent Nielsen",
       "club": "Silkeborg IF",
       "age": 48,
@@ -167395,7 +167395,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 798339,
+      "id": 147859,
       "name": "Rafael Benítez",
       "club": "Panathinaikos Athlitikos Omilos",
       "age": 48,
@@ -167437,7 +167437,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 872431,
+      "id": 130540,
       "name": "Philippe Clement",
       "club": "Norwich City",
       "age": 48,
@@ -167479,7 +167479,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 116317,
+      "id": 628357,
       "name": "Bruno Génésio",
       "club": "LOSC Lille",
       "age": 48,
@@ -167521,7 +167521,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 246247,
+      "id": 108564,
       "name": "Rui Vitória",
       "club": "Panathinaikos Athlitikos Omilos",
       "age": 48,
@@ -167563,7 +167563,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 138382,
+      "id": 616736,
       "name": "Imanol Alguacil",
       "club": "Al-Shabab Club",
       "age": 48,
@@ -167605,7 +167605,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 427900,
+      "id": 296940,
       "name": "Arne Slot",
       "club": "Liverpool FC",
       "age": 46,
@@ -167647,7 +167647,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 770073,
+      "id": 540070,
       "name": "Arsène Wenger",
       "club": "Arsenal FC",
       "age": 48,
@@ -167689,7 +167689,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 885521,
+      "id": 839575,
       "name": "Ståle Solbakken",
       "club": "Top Flight Club",
       "age": 48,
@@ -167731,7 +167731,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 577134,
+      "id": 916026,
       "name": "Julian Nagelsmann",
       "club": "Germany National Team",
       "age": 38,
@@ -167773,7 +167773,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 498097,
+      "id": 805735,
       "name": "Sean Dyche",
       "club": "Nottingham Forest",
       "age": 48,
@@ -167815,7 +167815,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 184141,
+      "id": 382000,
       "name": "Felice Mazzù",
       "club": "Oud-Heverlee Leuven",
       "age": 48,
@@ -167857,7 +167857,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 684574,
+      "id": 938543,
       "name": "Viktor Goncharenko",
       "club": "Ural Yekaterinburg",
       "age": 48,
@@ -167899,7 +167899,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 189156,
+      "id": 681697,
       "name": "Neil Lennon",
       "club": "Top Flight Club",
       "age": 48,
@@ -167941,7 +167941,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 989747,
+      "id": 521897,
       "name": "Roberto De Zerbi",
       "club": "Olympique Marseille",
       "age": 46,
@@ -167983,7 +167983,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 473341,
+      "id": 934990,
       "name": "Rúben Amorim",
       "club": "Manchester United",
       "age": 40,
@@ -168025,7 +168025,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 471841,
+      "id": 886771,
       "name": "Yuriy Vernydub",
       "club": "Kryvbas Kryvyi Rig",
       "age": 48,
@@ -168067,7 +168067,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 602765,
+      "id": 897922,
       "name": "Michel Der Zakarian",
       "club": "Montpellier HSC",
       "age": 48,
@@ -168109,7 +168109,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 968336,
+      "id": 207357,
       "name": "Claudio Ranieri",
       "club": "Associazione Sportiva Roma",
       "age": 48,
@@ -168151,7 +168151,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 859343,
+      "id": 659127,
       "name": "Claude Puel",
       "club": "OGC Nice",
       "age": 48,
@@ -168193,7 +168193,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 973411,
+      "id": 633266,
       "name": "Jagoba Arrasate",
       "club": "RCD Mallorca",
       "age": 48,
@@ -168235,7 +168235,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 17441,
+      "id": 418247,
       "name": "Julen Lopetegui",
       "club": "Top Flight Club",
       "age": 48,
@@ -168277,7 +168277,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 725164,
+      "id": 912858,
       "name": "Rıza Çalımbay",
       "club": "Sivasspor",
       "age": 48,
@@ -168319,7 +168319,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 507937,
+      "id": 744131,
       "name": "Zinédine Zidane",
       "club": "Free Agent",
       "age": 53,
@@ -168361,7 +168361,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 744891,
+      "id": 163244,
       "name": "Dieter Hecking",
       "club": "VfL Wolfsburg",
       "age": 48,
@@ -168403,7 +168403,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 174013,
+      "id": 270997,
       "name": "Marco Rose",
       "club": "RB Leipzig",
       "age": 48,
@@ -168445,7 +168445,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 699376,
+      "id": 988420,
       "name": "Vincenzo Italiano",
       "club": "Bologna Football Club 1909",
       "age": 48,
@@ -168487,7 +168487,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 510767,
+      "id": 591392,
       "name": "Ronald Koeman",
       "club": "Top Flight Club",
       "age": 48,
@@ -168529,7 +168529,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 875909,
+      "id": 939882,
       "name": "Phillip Cocu",
       "club": "Vitesse Arnhem",
       "age": 48,
@@ -168571,7 +168571,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 607503,
+      "id": 108888,
       "name": "Ralph Hasenhüttl",
       "club": "VfL Wolfsburg",
       "age": 48,
@@ -168613,7 +168613,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 424297,
+      "id": 41871,
       "name": "Henk Fraser",
       "club": "RKC Waalwijk",
       "age": 48,
@@ -168655,7 +168655,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 398921,
+      "id": 879809,
       "name": "Şenol Güneş",
       "club": "Trabzonspor",
       "age": 48,
@@ -168697,7 +168697,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 781356,
+      "id": 471367,
       "name": "Oliver Glasner",
       "club": "Crystal Palace",
       "age": 51,
@@ -168739,7 +168739,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 766813,
+      "id": 249169,
       "name": "Adi Hütter",
       "club": "AS Monaco",
       "age": 48,
@@ -168781,7 +168781,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 259961,
+      "id": 901688,
       "name": "Thomas Frank",
       "club": "Brentford FC",
       "age": 51,
@@ -168823,7 +168823,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 633336,
+      "id": 483802,
       "name": "Francky Dury",
       "club": "Zulte Waregem",
       "age": 48,
@@ -168865,7 +168865,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 431937,
+      "id": 191636,
       "name": "Giovanni van Bronckhorst",
       "club": "Beşiktaş Jimnastik Kulübü",
       "age": 48,
@@ -168907,7 +168907,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 285322,
+      "id": 118749,
       "name": "Niels Frederiksen",
       "club": "Lech Poznan",
       "age": 48,
@@ -168949,7 +168949,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 183381,
+      "id": 933347,
       "name": "Hansi Flick",
       "club": "FC Barcelona",
       "age": 60,
@@ -168991,7 +168991,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 258538,
+      "id": 628067,
       "name": "Fatih Terim",
       "club": "Al-Shabab Club",
       "age": 48,
@@ -169033,7 +169033,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 513067,
+      "id": 284106,
       "name": "Thomas Thomasberg",
       "club": "Pogon Szczecin",
       "age": 48,
@@ -169075,7 +169075,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 958168,
+      "id": 454408,
       "name": "Dick Advocaat",
       "club": "Top Flight Club",
       "age": 48,
@@ -169117,7 +169117,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 147581,
+      "id": 116257,
       "name": "Siniša Mihajlović",
       "club": "Bologna Football Club 1909",
       "age": 48,
@@ -169159,7 +169159,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 229859,
+      "id": 299509,
       "name": "Valeriy Karpin",
       "club": "FK Dinamo Moskva",
       "age": 48,
@@ -169201,7 +169201,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 808169,
+      "id": 892207,
       "name": "Laurent Blanc",
       "club": "Al-Ittihad Football Club",
       "age": 48,
@@ -169243,7 +169243,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 807105,
+      "id": 633449,
       "name": "Jocelyn Gourvennec",
       "club": "Servette FC",
       "age": 48,
@@ -169285,7 +169285,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 686536,
+      "id": 328934,
       "name": "Walter Mazzarri",
       "club": "SSC Napoli",
       "age": 48,
@@ -169327,7 +169327,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 981473,
+      "id": 485828,
       "name": "Gennaro Gattuso",
       "club": "HNK Hajduk Split",
       "age": 48,
@@ -169369,7 +169369,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 60440,
+      "id": 831865,
       "name": "Xavi",
       "club": "Free Agent",
       "age": 45,
@@ -169411,7 +169411,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 413692,
+      "id": 368202,
       "name": "André Villas-Boas",
       "club": "Olympique Marseille",
       "age": 48,
@@ -169453,7 +169453,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 119615,
+      "id": 454566,
       "name": "Tommy Wright",
       "club": "Kilmarnock FC",
       "age": 48,
@@ -169495,7 +169495,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 541054,
+      "id": 341950,
       "name": "Petit",
       "club": "CD Santa Clara",
       "age": 48,
@@ -169537,7 +169537,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 882050,
+      "id": 349259,
       "name": "Stephen Robinson",
       "club": "Aberdeen FC",
       "age": 48,
@@ -169579,7 +169579,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 269732,
+      "id": 437949,
       "name": "Giannis Petrakis",
       "club": "Panetolikos Agrinio",
       "age": 48,
@@ -169621,7 +169621,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 50987,
+      "id": 186048,
       "name": "Carlos Carvalhal",
       "club": "SC Braga",
       "age": 48,
@@ -169663,7 +169663,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 126633,
+      "id": 247160,
       "name": "Apostolos Mantzios",
       "club": "Aris Thessalonikis",
       "age": 48,
@@ -169705,7 +169705,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 727933,
+      "id": 305146,
       "name": "Kasper Hjulmand",
       "club": "Bayer 04 Leverkusen",
       "age": 48,
@@ -169747,7 +169747,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 944221,
+      "id": 370556,
       "name": "Antoine Kombouaré",
       "club": "Paris FC",
       "age": 48,
@@ -169789,7 +169789,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 140809,
+      "id": 869609,
       "name": "Rolando Maran",
       "club": "Brescia Calcio",
       "age": 48,
@@ -169831,7 +169831,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 590490,
+      "id": 324708,
       "name": "Steven Gerrard",
       "club": "Al-Ettifaq Football Club",
       "age": 48,
@@ -169873,7 +169873,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 626046,
+      "id": 652604,
       "name": "Vincent Kompany",
       "club": "Bayern Munich",
       "age": 39,
@@ -169915,7 +169915,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 430790,
+      "id": 18385,
       "name": "Aykut Kocaman",
       "club": "Basaksehir FK",
       "age": 48,
@@ -169957,7 +169957,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 52878,
+      "id": 305414,
       "name": "Ivan Juric",
       "club": "Atalanta BC",
       "age": 48,
@@ -169999,7 +169999,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 397934,
+      "id": 169437,
       "name": "Pepe Bordalás",
       "club": "Getafe CF",
       "age": 48,
@@ -170041,7 +170041,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 110329,
+      "id": 591867,
       "name": "Viktor Skrypnyk",
       "club": "Zorya Lugansk",
       "age": 48,
@@ -170083,7 +170083,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 422769,
+      "id": 6866,
       "name": "Igor Tudor",
       "club": "Tottenham Hotspur",
       "age": 48,
@@ -170125,7 +170125,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 823286,
+      "id": 513633,
       "name": "Leonid Slutskiy",
       "club": "FC Rubin Kazan",
       "age": 48,
@@ -170167,7 +170167,7 @@ window.TACTICAL_ENGINE_DATA = {
       }
     },
     {
-      "id": 30142,
+      "id": 866591,
       "name": "Wouter Vrancken",
       "club": "Sint-Truidense VV",
       "age": 48,

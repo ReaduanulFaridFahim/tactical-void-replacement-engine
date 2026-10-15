@@ -10,6 +10,25 @@
  * - Real-time Budget Cap, Max Age, and Suitability Sliders
  */
 
+
+// -----------------------------------------------------------------------------
+// Safe DOM Helpers for Multi-Page Suite Resilience
+// -----------------------------------------------------------------------------
+function safeSetText(id, text) {
+  const el = typeof id === 'string' ? document.getElementById(id) : id;
+  if (el) el.textContent = (text !== undefined && text !== null) ? text : '';
+}
+
+function safeSetHTML(id, html) {
+  const el = typeof id === 'string' ? document.getElementById(id) : id;
+  if (el) el.innerHTML = (html !== undefined && html !== null) ? html : '';
+}
+
+function safeSetStyle(id, prop, val) {
+  const el = typeof id === 'string' ? document.getElementById(id) : id;
+  if (el && el.style) el.style[prop] = val;
+}
+
 let engineData = null;
 let currentEntityMode = 'players'; // 'players' | 'coaches'
 let currentDepartureIndex = 0;
@@ -170,6 +189,7 @@ async function initApp() {
 
     setupEventListeners();
     setupExecutiveDock();
+    setupPageNavigation();
     setupSearchAutocomplete();
     setupCustomCandidateSearch();
     setupScatterPlotListeners();
@@ -180,6 +200,7 @@ async function initApp() {
     setupShareButton();
     renderPlayerCategoryTabs();
     renderDepartureChips();
+    setupFreeScrollExperience();
     parseUrlParamsOnLoad();
   } catch (err) {
     console.error('Initialization error:', err);
@@ -416,28 +437,28 @@ function setupMlInferenceControls() {
 
   if (feeSlider) {
     feeSlider.addEventListener('input', (e) => {
-      document.getElementById('mlFeeSliderVal').textContent = `€${e.target.value}M`;
+      safeSetText('mlFeeSliderVal', `€${e.target.value}M`);
       triggerDebouncedMlInference(50);
     });
   }
 
   if (ppgSlider) {
     ppgSlider.addEventListener('input', (e) => {
-      document.getElementById('mlPpgSliderVal').textContent = `${parseFloat(e.target.value).toFixed(2)} PPG`;
+      safeSetText('mlPpgSliderVal', `${parseFloat(e.target.value).toFixed(2)} PPG`);
       triggerDebouncedMlInference(50);
     });
   }
 
   if (minsSlider) {
     minsSlider.addEventListener('input', (e) => {
-      document.getElementById('mlMinsSliderVal').textContent = `${e.target.value}%`;
+      safeSetText('mlMinsSliderVal', `${e.target.value}%`);
       triggerDebouncedMlInference(50);
     });
   }
 
   if (goalShareSlider) {
     goalShareSlider.addEventListener('input', (e) => {
-      document.getElementById('mlGoalShareSliderVal').textContent = `${e.target.value}%`;
+      safeSetText('mlGoalShareSliderVal', `${e.target.value}%`);
       triggerDebouncedMlInference(50);
     });
   }
@@ -539,95 +560,136 @@ function setupMlPresets() {
 // -----------------------------------------------------------------------------
 // EXECUTIVE QUICK-JUMP STICKY COMMAND DOCK
 // -----------------------------------------------------------------------------
-function setupExecutiveDock() {
-  const dock = document.getElementById('executiveNavDock');
-  if (!dock) return;
 
-  const links = dock.querySelectorAll('.dock-link');
-  const targetMap = [
-    { linkId: 'dockLinkVoid', targetId: 'voidAnalysisCard' },
-    { linkId: 'dockLinkPitch', targetId: 'pitchTacticalSection' },
-    { linkId: 'dockLinkMl', targetId: 'liveMlPredictionSection' },
-    { linkId: 'dockLinkScatter', targetId: 'scatterSection' },
-    { linkId: 'dockLinkRadar', targetId: 'radarWorkbenchSection' },
-    { linkId: 'dockLinkFfp', targetId: 'ffpSection' },
-    { linkId: 'dockLinkCandidates', targetId: 'replacementsSection' },
-    { linkId: 'dockLinkMethod', targetId: 'frameworkCard' }
-  ];
+// -----------------------------------------------------------------------------
+// EXECUTIVE MULTI-PAGE SUITE NAVIGATION
+// -----------------------------------------------------------------------------
+function setupPageNavigation() {
+  const pageNav = document.querySelector('.header-suite-tabs');
+  if (!pageNav) return;
 
-  // Smooth scroll click handler
+  const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+  const links = pageNav.querySelectorAll('.suite-tab');
+
   links.forEach(link => {
-    link.addEventListener('click', (e) => {
-      const href = link.getAttribute('href');
-      if (href && href.startsWith('#')) {
-        e.preventDefault();
-        const target = document.querySelector(href);
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          links.forEach(l => l.classList.remove('active'));
-          link.classList.add('active');
-        }
+    const rawHref = link.getAttribute('href');
+    if (rawHref) {
+      const pageBase = rawHref.split('?')[0];
+      if (pageBase === currentPath || (currentPath === '' && pageBase === 'index.html')) {
+        link.classList.add('active');
+      } else if (!pageBase.startsWith('#')) {
+        link.classList.remove('active');
       }
-    });
+    }
   });
 
-  // IntersectionObserver to highlight active dock link on scroll
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const id = entry.target.id;
-          const match = targetMap.find(m => m.targetId === id);
-          if (match) {
-            links.forEach(l => l.classList.remove('active'));
-            const activeLink = document.getElementById(match.linkId);
-            if (activeLink) {
-              activeLink.classList.add('active');
-              activeLink.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-            }
-          }
-        }
-      });
-    }, {
-      rootMargin: '-20% 0px -60% 0px',
-      threshold: 0.1
-    });
-
-    targetMap.forEach(m => {
-      const el = document.getElementById(m.targetId);
-      if (el) observer.observe(el);
-    });
-  }
-
-  // Quick Action Buttons in Dock
-  const btnDockTop3 = document.getElementById('btnDockAutoTop3');
-  if (btnDockTop3) {
-    btnDockTop3.addEventListener('click', () => {
-      setTop3MultiCompare();
-      const radarSec = document.getElementById('radarWorkbenchSection');
-      if (radarSec) {
-        radarSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Floating Back to Top Button
+  const btnTop = document.getElementById('btnBackToTop');
+  if (btnTop) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 350) {
+        btnTop.classList.add('visible');
+      } else {
+        btnTop.classList.remove('visible');
       }
-      showToast('⚡ Auto-selected Top 3 candidates in 3-Way Radar Faceoff!');
-    });
-  }
+    }, { passive: true });
 
-  const btnDockExport = document.getElementById('btnDockExport');
-  if (btnDockExport) {
-    btnDockExport.addEventListener('click', () => {
-      const mainExportBtn = document.getElementById('btnExportDossier');
-      if (mainExportBtn) mainExportBtn.click();
-    });
-  }
-
-  const btnDockShare = document.getElementById('btnDockShare');
-  if (btnDockShare) {
-    btnDockShare.addEventListener('click', () => {
-      const mainShareBtn = document.getElementById('btnShareFaceoff');
-      if (mainShareBtn) mainShareBtn.click();
+    btnTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 }
+
+function setupExecutiveDock() {
+  // Backwards-compatible alias for multi-page suite navigation
+  setupPageNavigation();
+}
+
+// -----------------------------------------------------------------------------
+// SEAMLESS & NATURAL SCROLLING ENGINE (ZERO DEAD ZONES, ZERO SCROLL TRAPPING)
+// -----------------------------------------------------------------------------
+function setupFreeScrollExperience() {
+  // 1. Horizontal Tracks: Mouse Drag-to-Scroll + Wheel Forwarding
+  const horizontalTracks = document.querySelectorAll(
+    '.player-chips-track, .category-tabs-track, .comparison-table-wrap, .table-responsive'
+  );
+
+  horizontalTracks.forEach(track => {
+    if (track.dataset.freeScrollBound === 'true') return;
+    track.dataset.freeScrollBound = 'true';
+
+    let isDown = false;
+    let startX = 0;
+    let scrollStartLeft = 0;
+    let draggedDistance = 0;
+
+    track.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // Only primary mouse button
+      isDown = true;
+      draggedDistance = 0;
+      startX = e.pageX - track.offsetLeft;
+      scrollStartLeft = track.scrollLeft;
+      track.classList.add('is-dragging');
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDown) {
+        isDown = false;
+        track.classList.remove('is-dragging');
+      }
+    });
+
+    track.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - track.offsetLeft;
+      const walk = (x - startX);
+      draggedDistance += Math.abs(walk);
+      track.scrollLeft = scrollStartLeft - walk;
+    });
+
+    // Cancel click on children if user dragged the track
+    track.addEventListener('click', (e) => {
+      if (draggedDistance > 8) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    }, true);
+
+    // Mouse Wheel Forwarding:
+    // If Shift is pressed, scroll the track horizontally.
+    // If normal vertical wheel, ensure window scrolls vertically with zero trapping.
+    track.addEventListener('wheel', (e) => {
+      if (e.shiftKey) {
+        track.scrollLeft += e.deltaY;
+        e.preventDefault();
+      } else if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        // Transparently scroll the window vertically so no dead zone occurs
+        e.preventDefault();
+        window.scrollBy({
+          top: e.deltaY,
+          behavior: 'auto'
+        });
+      }
+    }, { passive: false });
+  });
+
+  // 2. Global Keyboard Navigation (Home, End)
+  if (!window._freeScrollKeyBound) {
+    window._freeScrollKeyBound = true;
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+      if (e.key === 'Home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (e.key === 'End') {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
+    }, { passive: true });
+  }
+}
+
+
 
 function syncMlSlidersWithActiveStar() {
   const activeStar = getActiveStarData();
@@ -671,6 +733,7 @@ function syncMlSlidersWithActiveStar() {
 let mlInFlightController = null;
 
 async function executeLiveMlPrediction(showFeedbackToast = false) {
+  if (!document.getElementById('liveMlPredictionSection')) return;
   const isCoach = currentEntityMode === 'coaches';
   const activeStar = isCoach ? getActiveCoachData() : getActiveStarData();
   if (!activeStar) return;
@@ -906,7 +969,7 @@ function setupEventListeners() {
   if (budgetSlider) {
     budgetSlider.addEventListener('input', (e) => {
       filterBudgetRatio = parseInt(e.target.value) / 100.0;
-      document.getElementById('budgetSliderVal').textContent = `${e.target.value}%`;
+      safeSetText('budgetSliderVal', `${e.target.value}%`);
       if (currentEntityMode === 'coaches') renderCoachRecommendations();
       else renderRecommendations();
     });
@@ -915,7 +978,7 @@ function setupEventListeners() {
   if (ageSlider) {
     ageSlider.addEventListener('input', (e) => {
       filterMaxAge = parseInt(e.target.value);
-      document.getElementById('ageSliderVal').textContent = `${filterMaxAge} yrs`;
+      safeSetText('ageSliderVal', `${filterMaxAge} yrs`);
       if (currentEntityMode === 'coaches') renderCoachRecommendations();
       else renderRecommendations();
     });
@@ -924,7 +987,7 @@ function setupEventListeners() {
   if (scoreSlider) {
     scoreSlider.addEventListener('input', (e) => {
       filterMinScore = parseInt(e.target.value);
-      document.getElementById('scoreSliderVal').textContent = `${filterMinScore}%`;
+      safeSetText('scoreSliderVal', `${filterMinScore}%`);
       if (currentEntityMode === 'coaches') renderCoachRecommendations();
       else renderRecommendations();
     });
@@ -959,14 +1022,14 @@ function setupEventListeners() {
         filterMaxAge = 65;
         if (ageSlider) {
           ageSlider.value = 65;
-          document.getElementById('ageSliderVal').textContent = '65 yrs';
+          safeSetText('ageSliderVal', '65 yrs');
         }
         renderCoachRecommendations();
       } else {
         filterMaxAge = 32;
         if (ageSlider) {
           ageSlider.value = 32;
-          document.getElementById('ageSliderVal').textContent = '32 yrs';
+          safeSetText('ageSliderVal', '32 yrs');
         }
         renderRecommendations();
       }
@@ -980,14 +1043,14 @@ function setupEventListeners() {
         filterMaxAge = 45; // Emerging tactician under 45
         if (ageSlider) {
           ageSlider.value = 45;
-          document.getElementById('ageSliderVal').textContent = '45 yrs';
+          safeSetText('ageSliderVal', '45 yrs');
         }
         renderCoachRecommendations();
       } else {
         filterMaxAge = 23;
         if (ageSlider) {
           ageSlider.value = 23;
-          document.getElementById('ageSliderVal').textContent = '23 yrs';
+          safeSetText('ageSliderVal', '23 yrs');
         }
         renderRecommendations();
       }
@@ -1285,15 +1348,15 @@ function selectCustomBenchmarkPlayer(p) {
     }
   }
 
-  document.getElementById('starName').textContent = p.name;
-  document.getElementById('starMeta').textContent = `${p.club} • Age ${p.age} • ${p.sub_pos || p.pos}`;
-  document.getElementById('starRoleTag').textContent = `${p.tactical_role || p.sub_pos || p.pos}`;
-  document.getElementById('starFeeTag').textContent = `${formatCurrency(p.val)} Valuation`;
+  safeSetText('starName', p.name);
+  safeSetText('starMeta', `${p.club} • Age ${p.age} • ${p.sub_pos || p.pos}`);
+  safeSetText('starRoleTag', `${p.tactical_role || p.sub_pos || p.pos}`);
+  safeSetText('starFeeTag', `${formatCurrency(p.val)} Valuation`);
 
-  document.getElementById('starG90').textContent = p.g90.toFixed(2);
-  document.getElementById('starA90').textContent = p.a90.toFixed(2);
-  document.getElementById('starGA90').textContent = p.ga90.toFixed(2);
-  document.getElementById('starMinApp').textContent = p.min_app.toFixed(1);
+  safeSetText('starG90', p.g90.toFixed(2));
+  safeSetText('starA90', p.a90.toFixed(2));
+  safeSetText('starGA90', p.ga90.toFixed(2));
+  safeSetText('starMinApp', p.min_app.toFixed(1));
 
   const starAgentEl = document.getElementById('starAgentName');
   if (starAgentEl) starAgentEl.textContent = p.agent || 'Family / Direct';
@@ -1316,32 +1379,32 @@ function selectCustomBenchmarkPlayer(p) {
   const urgencyTier = p.age >= 32 ? "CRITICAL SUCCESSION URGENCY" : (p.age >= 29 ? "MEDIUM-TERM SUCCESSION PLANNING" : "SQUAD DEPTH CONTINGENCY");
   const urgencyScore = p.age >= 32 ? 92 : (p.age >= 29 ? 68 : 42);
 
-  document.getElementById('voidSubtext').textContent = 
-    `${p.club} succession analysis: Scout replacements before age curve decline or transfer exit`;
+  safeSetText('voidSubtext', `${p.club} succession analysis: Scout replacements before age curve decline or transfer exit`);
 
-  document.getElementById('voidSeverityValue').textContent = `${urgencyScore} / 100`;
-  document.getElementById('voidMeterFill').style.width = `${urgencyScore}%`;
-  document.getElementById('voidSeverityDesc').textContent = 
-    `At ${p.age} years old, athlete is in ${p.age >= 31 ? 'veteran decline horizon' : 'peak performance window'}. The engine is modeling successors to sustain tactical output.`;
+  safeSetText('voidSeverityValue', `${urgencyScore} / 100`);
+  safeSetStyle('voidMeterFill', 'width', `${urgencyScore}%`);
+  safeSetText('voidSeverityDesc', `At ${p.age} years old, athlete is in ${p.age >= 31 ? 'veteran decline horizon' : 'peak performance window'}. The engine is modeling successors to sustain tactical output.`);
 
   const pill = document.getElementById('voidSeverityPill');
-  pill.textContent = urgencyTier;
+  if (pill) {
+    pill.textContent = urgencyTier;
   pill.className = 'severity-pill ';
   if (urgencyScore >= 75) pill.classList.add('severity-critical');
   else if (urgencyScore >= 60) pill.classList.add('severity-moderate');
   else pill.classList.add('severity-positive');
+  }
 
-  document.getElementById('ppgPrePost').innerHTML = `2.15 ➔ <strong>1.68</strong>`;
+  safeSetHTML('ppgPrePost', `2.15 ➔ <strong>1.68</strong>`);
   updateDeltaPill('ppgDelta', -0.47, 2);
-  document.getElementById('winRatePrePost').innerHTML = `68.0% ➔ <strong>48.0%</strong>`;
+  safeSetHTML('winRatePrePost', `68.0% ➔ <strong>48.0%</strong>`);
   updateDeltaPill('winRateDelta', -20.0, 1, '%');
-  document.getElementById('gfPrePost').innerHTML = `2.30 ➔ <strong>1.60</strong>`;
+  safeSetHTML('gfPrePost', `2.30 ➔ <strong>1.60</strong>`);
   updateDeltaPill('gfDelta', -0.70, 2);
-  document.getElementById('gaPrePost').innerHTML = `1.10 ➔ <strong>1.35</strong>`;
+  safeSetHTML('gaPrePost', `1.10 ➔ <strong>1.35</strong>`);
   updateDeltaPill('gaDelta', 0.25, 2, '', true);
-  document.getElementById('csPrePost').innerHTML = `40.0% ➔ <strong>24.0%</strong>`;
+  safeSetHTML('csPrePost', `40.0% ➔ <strong>24.0%</strong>`);
   updateDeltaPill('csDelta', -16.0, 1, '%');
-  document.getElementById('formationPrePost').innerHTML = `${p.form} ➔ <strong>4-2-3-1</strong>`;
+  safeSetHTML('formationPrePost', `${p.form} ➔ <strong>4-2-3-1</strong>`);
 
   renderRecommendations();
 }
@@ -1379,15 +1442,15 @@ function selectCustomBenchmarkCoach(p) {
     }
   }
 
-  document.getElementById('starName').textContent = p.name;
-  document.getElementById('starMeta').textContent = `${p.club} • Age ${p.age} • ${p.top_formation}`;
-  document.getElementById('starRoleTag').textContent = `${p.tactical_archetype || 'Head Coach'}`;
-  document.getElementById('starFeeTag').textContent = `${formatCurrency(p.annual_wage_eur)}/yr Wage`;
+  safeSetText('starName', p.name);
+  safeSetText('starMeta', `${p.club} • Age ${p.age} • ${p.top_formation}`);
+  safeSetText('starRoleTag', `${p.tactical_archetype || 'Head Coach'}`);
+  safeSetText('starFeeTag', `${formatCurrency(p.annual_wage_eur)}/yr Wage`);
 
-  document.getElementById('starG90').textContent = p.ppg.toFixed(2);
-  document.getElementById('starA90').textContent = `${p.win_pct.toFixed(1)}%`;
-  document.getElementById('starGA90').textContent = p.gf_pg.toFixed(2);
-  document.getElementById('starMinApp').textContent = `${p.games || p.total_games} Games`;
+  safeSetText('starG90', p.ppg.toFixed(2));
+  safeSetText('starA90', `${p.win_pct.toFixed(1)}%`);
+  safeSetText('starGA90', p.gf_pg.toFixed(2));
+  safeSetText('starMinApp', `${p.games || p.total_games} Games`);
 
   const starAgentEl = document.getElementById('starAgentName');
   if (starAgentEl) starAgentEl.textContent = p.agent || 'Direct / Agency';
@@ -1414,31 +1477,31 @@ function selectCustomBenchmarkCoach(p) {
   const urgencyTier = p.age >= 60 ? "VETERAN TRANSITION CONTINGENCY" : "MEDIUM-TERM SUCCESSION PLANNING";
   const urgencyScore = p.age >= 60 ? 78 : 58;
 
-  document.getElementById('voidSubtext').textContent = 
-    `${p.club} managerial succession analysis: Scout successors to preserve sporting system`;
+  safeSetText('voidSubtext', `${p.club} managerial succession analysis: Scout successors to preserve sporting system`);
 
-  document.getElementById('voidSeverityValue').textContent = `${urgencyScore} / 100`;
-  document.getElementById('voidMeterFill').style.width = `${urgencyScore}%`;
-  document.getElementById('voidSeverityDesc').textContent = 
-    `At ${p.age} years old, tactician is in ${p.age >= 58 ? 'veteran managerial phase' : 'established prime phase'}. Modeling successors capable of sustaining ${p.top_formation}.`;
+  safeSetText('voidSeverityValue', `${urgencyScore} / 100`);
+  safeSetStyle('voidMeterFill', 'width', `${urgencyScore}%`);
+  safeSetText('voidSeverityDesc', `At ${p.age} years old, tactician is in ${p.age >= 58 ? 'veteran managerial phase' : 'established prime phase'}. Modeling successors capable of sustaining ${p.top_formation}.`);
 
   const pill = document.getElementById('voidSeverityPill');
-  pill.textContent = urgencyTier;
+  if (pill) {
+    pill.textContent = urgencyTier;
   pill.className = 'severity-pill ';
   if (urgencyScore >= 75) pill.classList.add('severity-critical');
   else pill.classList.add('severity-moderate');
+  }
 
-  document.getElementById('ppgPrePost').innerHTML = `2.12 ➔ <strong>1.65</strong>`;
+  safeSetHTML('ppgPrePost', `2.12 ➔ <strong>1.65</strong>`);
   updateDeltaPill('ppgDelta', -0.47, 2);
-  document.getElementById('winRatePrePost').innerHTML = `65.0% ➔ <strong>46.0%</strong>`;
+  safeSetHTML('winRatePrePost', `65.0% ➔ <strong>46.0%</strong>`);
   updateDeltaPill('winRateDelta', -19.0, 1, '%');
-  document.getElementById('gfPrePost').innerHTML = `2.25 ➔ <strong>1.55</strong>`;
+  safeSetHTML('gfPrePost', `2.25 ➔ <strong>1.55</strong>`);
   updateDeltaPill('gfDelta', -0.70, 2);
-  document.getElementById('gaPrePost').innerHTML = `1.05 ➔ <strong>1.38</strong>`;
+  safeSetHTML('gaPrePost', `1.05 ➔ <strong>1.38</strong>`);
   updateDeltaPill('gaDelta', 0.33, 2, '', true);
-  document.getElementById('csPrePost').innerHTML = `42.0% ➔ <strong>26.0%</strong>`;
+  safeSetHTML('csPrePost', `42.0% ➔ <strong>26.0%</strong>`);
   updateDeltaPill('csDelta', -16.0, 1, '%');
-  document.getElementById('formationPrePost').innerHTML = `${p.top_formation} ➔ <strong>4-2-3-1</strong>`;
+  safeSetHTML('formationPrePost', `${p.top_formation} ➔ <strong>4-2-3-1</strong>`);
 
   renderCoachRecommendations();
 }
@@ -1458,7 +1521,7 @@ function renderDepartureChips() {
     return true;
   });
 
-  document.getElementById('transferCountLabel').textContent = `${filtered.length} Dossiers Listed`;
+  safeSetText('transferCountLabel', `${filtered.length} Dossiers Listed`);
 
   filtered.forEach((dep) => {
     const origIdx = engineData.departures.indexOf(dep);
@@ -1498,6 +1561,7 @@ function renderDepartureChips() {
     });
     track.appendChild(chip);
   });
+  setupFreeScrollExperience();
 }
 
 // Select and Display a Specific Precompiled Departure
@@ -1517,45 +1581,45 @@ function selectDeparture(index) {
   const star = dep.star_stats;
   const isSucc = meta.is_succession_case === true;
 
-  document.getElementById('voidSubtext').textContent = isSucc ?
-    `${meta.from_club_name} succession planning: Scout understudy replacements before contract expiry` :
-    `${meta.from_club_name} sporting impact in 25 games post-departure (${meta.transfer_date})`;
+  safeSetText('voidSubtext', isSucc ? `${meta.from_club_name} succession planning: Scout understudy replacements before contract expiry` : `${meta.from_club_name} sporting impact in 25 games post-departure (${meta.transfer_date})`);
 
   const severityVal = voidData.void_severity;
-  document.getElementById('voidSeverityValue').textContent = `${severityVal} / 100`;
-  document.getElementById('voidMeterFill').style.width = `${severityVal}%`;
-  document.getElementById('voidSeverityDesc').textContent = voidData.severity_desc;
+  safeSetText('voidSeverityValue', `${severityVal} / 100`);
+  safeSetStyle('voidMeterFill', 'width', `${severityVal}%`);
+  safeSetText('voidSeverityDesc', voidData.severity_desc);
 
   const pill = document.getElementById('voidSeverityPill');
-  pill.textContent = voidData.severity_tier;
+  if (pill) {
+    pill.textContent = voidData.severity_tier;
   pill.className = 'severity-pill ';
   if (severityVal >= 75) pill.classList.add('severity-critical');
   else if (severityVal >= 60) pill.classList.add('severity-moderate');
   else if (severityVal >= 45) pill.classList.add('severity-rebuild');
   else pill.classList.add('severity-positive');
+  }
 
   const pre = voidData.pre;
   const post = voidData.post;
   const deltas = voidData.deltas;
 
-  document.getElementById('ppgPrePost').innerHTML = `${pre.ppg.toFixed(2)} ➔ <strong>${post.ppg.toFixed(2)}</strong>`;
+  safeSetHTML('ppgPrePost', `${pre.ppg.toFixed(2)} ➔ <strong>${post.ppg.toFixed(2)}</strong>`);
   updateDeltaPill('ppgDelta', deltas.delta_ppg, 2);
 
-  document.getElementById('winRatePrePost').innerHTML = `${pre.win_rate.toFixed(1)}% ➔ <strong>${post.win_rate.toFixed(1)}%</strong>`;
+  safeSetHTML('winRatePrePost', `${pre.win_rate.toFixed(1)}% ➔ <strong>${post.win_rate.toFixed(1)}%</strong>`);
   updateDeltaPill('winRateDelta', deltas.delta_win_rate, 1, '%');
 
-  document.getElementById('gfPrePost').innerHTML = `${pre.goals_for_pg.toFixed(2)} ➔ <strong>${post.goals_for_pg.toFixed(2)}</strong>`;
+  safeSetHTML('gfPrePost', `${pre.goals_for_pg.toFixed(2)} ➔ <strong>${post.goals_for_pg.toFixed(2)}</strong>`);
   updateDeltaPill('gfDelta', deltas.delta_gf_pg, 2);
 
-  document.getElementById('gaPrePost').innerHTML = `${pre.goals_against_pg.toFixed(2)} ➔ <strong>${post.goals_against_pg.toFixed(2)}</strong>`;
+  safeSetHTML('gaPrePost', `${pre.goals_against_pg.toFixed(2)} ➔ <strong>${post.goals_against_pg.toFixed(2)}</strong>`);
   updateDeltaPill('gaDelta', deltas.delta_ga_pg, 2, '', true);
 
   const csDelta = post.clean_sheet_pct - pre.clean_sheet_pct;
-  document.getElementById('csPrePost').innerHTML = `${pre.clean_sheet_pct.toFixed(1)}% ➔ <strong>${post.clean_sheet_pct.toFixed(1)}%</strong>`;
+  safeSetHTML('csPrePost', `${pre.clean_sheet_pct.toFixed(1)}% ➔ <strong>${post.clean_sheet_pct.toFixed(1)}%</strong>`);
   updateDeltaPill('csDelta', csDelta, 1, '%');
 
   const postForm = post.top_formations ? Object.keys(post.top_formations)[0] : 'Adaptive';
-  document.getElementById('formationPrePost').innerHTML = `${dep.primary_formation} ➔ <strong>${postForm}</strong>`;
+  safeSetHTML('formationPrePost', `${dep.primary_formation} ➔ <strong>${postForm}</strong>`);
 
   if (dep.primary_formation) {
     if (dep.primary_formation.includes('4-3-3')) currentPitchFormation = '4-3-3';
@@ -1581,17 +1645,15 @@ function selectDeparture(index) {
     }
   }
 
-  document.getElementById('starName').textContent = meta.player_name;
-  document.getElementById('starMeta').textContent = isSucc ?
-    `${meta.from_club_name} • Age ${star.age || 30} • ${meta.sub_position}` :
-    `${meta.from_club_name} ➔ ${meta.to_club_name} (${meta.transfer_date})`;
-  document.getElementById('starRoleTag').textContent = star.tactical_role || meta.role_tag || 'Talismanic Core';
-  document.getElementById('starFeeTag').textContent = `${formatCurrency(meta.transfer_fee)} ${isSucc ? 'Valuation' : 'Fee'}`;
+  safeSetText('starName', meta.player_name);
+  safeSetText('starMeta', isSucc ? `${meta.from_club_name} • Age ${star.age || 30} • ${meta.sub_position}` : `${meta.from_club_name} ➔ ${meta.to_club_name} (${meta.transfer_date})`);
+  safeSetText('starRoleTag', star.tactical_role || meta.role_tag || 'Talismanic Core');
+  safeSetText('starFeeTag', `${formatCurrency(meta.transfer_fee)} ${isSucc ? 'Valuation' : 'Fee'}`);
 
-  document.getElementById('starG90').textContent = star.goals_per_90.toFixed(2);
-  document.getElementById('starA90').textContent = star.assists_per_90.toFixed(2);
-  document.getElementById('starGA90').textContent = star.ga_per_90.toFixed(2);
-  document.getElementById('starMinApp').textContent = star.minutes_per_app.toFixed(1);
+  safeSetText('starG90', star.goals_per_90.toFixed(2));
+  safeSetText('starA90', star.assists_per_90.toFixed(2));
+  safeSetText('starGA90', star.ga_per_90.toFixed(2));
+  safeSetText('starMinApp', star.minutes_per_app.toFixed(1));
 
   const starAgentEl = document.getElementById('starAgentName');
   if (starAgentEl) starAgentEl.textContent = star.agent_name || 'Family / Direct';
@@ -1611,8 +1673,7 @@ function selectDeparture(index) {
   // Update Framework Stepper tags
   updateFrameworkStepperTags(star, meta, dep);
 
-  document.getElementById('systemCompatibilityText').innerHTML = 
-    `The candidate recommender is filtering players capable of replicating this output within <strong>${dep.primary_formation}</strong> while staying under the received transfer fee budget.`;
+  safeSetHTML('systemCompatibilityText', `The candidate recommender is filtering players capable of replicating this output within <strong>${dep.primary_formation}</strong> while staying under the received transfer fee budget.`);
 
   if (dep.primary_formation) {
     if (dep.primary_formation.includes('4-3-3')) currentPitchFormation = '4-3-3';
@@ -1680,6 +1741,7 @@ function renderCoachDepartureChips() {
     });
     track.appendChild(chip);
   });
+  setupFreeScrollExperience();
 }
 
 // Select and Display a Specific Precompiled Coach Departure
@@ -1699,45 +1761,45 @@ function selectCoachDeparture(index) {
   const star = dep.star_stats;
   const isSucc = meta.is_succession_case === true;
 
-  document.getElementById('voidSubtext').textContent = isSucc ?
-    `${meta.from_club_name} managerial succession planning: Scout drop-in successor before contract transition` :
-    `${meta.from_club_name} managerial sporting void in 25 games post-${meta.coach_name} exit (${meta.departure_date})`;
+  safeSetText('voidSubtext', isSucc ? `${meta.from_club_name} managerial succession planning: Scout drop-in successor before contract transition` : `${meta.from_club_name} managerial sporting void in 25 games post-${meta.coach_name} exit (${meta.departure_date})`);
 
   const severityVal = voidData.void_severity;
-  document.getElementById('voidSeverityValue').textContent = `${severityVal} / 100`;
-  document.getElementById('voidMeterFill').style.width = `${severityVal}%`;
-  document.getElementById('voidSeverityDesc').textContent = voidData.severity_desc;
+  safeSetText('voidSeverityValue', `${severityVal} / 100`);
+  safeSetStyle('voidMeterFill', 'width', `${severityVal}%`);
+  safeSetText('voidSeverityDesc', voidData.severity_desc);
 
   const pill = document.getElementById('voidSeverityPill');
-  pill.textContent = voidData.severity_tier;
+  if (pill) {
+    pill.textContent = voidData.severity_tier;
   pill.className = 'severity-pill ';
   if (severityVal >= 75) pill.classList.add('severity-critical');
   else if (severityVal >= 60) pill.classList.add('severity-moderate');
   else if (severityVal >= 45) pill.classList.add('severity-rebuild');
   else pill.classList.add('severity-positive');
+  }
 
   const pre = voidData.pre;
   const post = voidData.post;
   const deltas = voidData.deltas;
 
-  document.getElementById('ppgPrePost').innerHTML = `${pre.ppg.toFixed(2)} ➔ <strong>${post.ppg.toFixed(2)}</strong>`;
+  safeSetHTML('ppgPrePost', `${pre.ppg.toFixed(2)} ➔ <strong>${post.ppg.toFixed(2)}</strong>`);
   updateDeltaPill('ppgDelta', deltas.delta_ppg, 2);
 
-  document.getElementById('winRatePrePost').innerHTML = `${pre.win_rate.toFixed(1)}% ➔ <strong>${post.win_rate.toFixed(1)}%</strong>`;
+  safeSetHTML('winRatePrePost', `${pre.win_rate.toFixed(1)}% ➔ <strong>${post.win_rate.toFixed(1)}%</strong>`);
   updateDeltaPill('winRateDelta', deltas.delta_win_rate, 1, '%');
 
-  document.getElementById('gfPrePost').innerHTML = `${pre.goals_for_pg.toFixed(2)} ➔ <strong>${post.goals_for_pg.toFixed(2)}</strong>`;
+  safeSetHTML('gfPrePost', `${pre.goals_for_pg.toFixed(2)} ➔ <strong>${post.goals_for_pg.toFixed(2)}</strong>`);
   updateDeltaPill('gfDelta', deltas.delta_gf_pg, 2);
 
-  document.getElementById('gaPrePost').innerHTML = `${pre.goals_against_pg.toFixed(2)} ➔ <strong>${post.goals_against_pg.toFixed(2)}</strong>`;
+  safeSetHTML('gaPrePost', `${pre.goals_against_pg.toFixed(2)} ➔ <strong>${post.goals_against_pg.toFixed(2)}</strong>`);
   updateDeltaPill('gaDelta', deltas.delta_ga_pg, 2, '', true);
 
   const csDelta = post.clean_sheet_pct - pre.clean_sheet_pct;
-  document.getElementById('csPrePost').innerHTML = `${pre.clean_sheet_pct.toFixed(1)}% ➔ <strong>${post.clean_sheet_pct.toFixed(1)}%</strong>`;
+  safeSetHTML('csPrePost', `${pre.clean_sheet_pct.toFixed(1)}% ➔ <strong>${post.clean_sheet_pct.toFixed(1)}%</strong>`);
   updateDeltaPill('csDelta', csDelta, 1, '%');
 
   const postForm = post.top_formations ? Object.keys(post.top_formations)[0] : 'Adaptive';
-  document.getElementById('formationPrePost').innerHTML = `${meta.primary_formation} ➔ <strong>${postForm}</strong>`;
+  safeSetHTML('formationPrePost', `${meta.primary_formation} ➔ <strong>${postForm}</strong>`);
 
   // Update Star Benchmark Card
   const starPhoto = document.getElementById('starPhoto');
@@ -1755,17 +1817,15 @@ function selectCoachDeparture(index) {
     }
   }
 
-  document.getElementById('starName').textContent = meta.coach_name;
-  document.getElementById('starMeta').textContent = isSucc ?
-    `${meta.from_club_name} • Age ${star.age || meta.age} • ${meta.primary_formation}` :
-    `${meta.from_club_name} ➔ ${meta.to_destination} (${meta.departure_date})`;
-  document.getElementById('starRoleTag').textContent = star.tactical_archetype || meta.philosophy_tag || 'Master Tactician';
-  document.getElementById('starFeeTag').textContent = `${formatCurrency(meta.annual_wage || star.annual_wage_eur)}/yr Wage`;
+  safeSetText('starName', meta.coach_name);
+  safeSetText('starMeta', isSucc ? `${meta.from_club_name} • Age ${star.age || meta.age} • ${meta.primary_formation}` : `${meta.from_club_name} ➔ ${meta.to_destination} (${meta.departure_date})`);
+  safeSetText('starRoleTag', star.tactical_archetype || meta.philosophy_tag || 'Master Tactician');
+  safeSetText('starFeeTag', `${formatCurrency(meta.annual_wage || star.annual_wage_eur)}/yr Wage`);
 
-  document.getElementById('starG90').textContent = star.ppg.toFixed(2);
-  document.getElementById('starA90').textContent = `${star.win_pct.toFixed(1)}%`;
-  document.getElementById('starGA90').textContent = star.gf_pg.toFixed(2);
-  document.getElementById('starMinApp').textContent = `${star.total_games} Games`;
+  safeSetText('starG90', star.ppg.toFixed(2));
+  safeSetText('starA90', `${star.win_pct.toFixed(1)}%`);
+  safeSetText('starGA90', star.gf_pg.toFixed(2));
+  safeSetText('starMinApp', `${star.total_games} Games`);
 
   const starAgentEl = document.getElementById('starAgentName');
   if (starAgentEl) starAgentEl.textContent = star.agent || 'Direct / Agency';
@@ -1789,8 +1849,7 @@ function selectCoachDeparture(index) {
   const s4 = document.getElementById('step4DynamicTag');
   if (s4) s4.textContent = `Wage Budget: ${formatCurrency(meta.annual_wage || star.annual_wage_eur)}/yr • Composite Managerial Match Ranking`;
 
-  document.getElementById('systemCompatibilityText').innerHTML = 
-    `The managerial recommender is scoring tactical leaders capable of deploying <strong>${meta.primary_formation}</strong> with high pressing intensity while fitting within the club's managerial wage framework.`;
+  safeSetHTML('systemCompatibilityText', `The managerial recommender is scoring tactical leaders capable of deploying <strong>${meta.primary_formation}</strong> with high pressing intensity while fitting within the club's managerial wage framework.`);
 
   if (meta.primary_formation) {
     if (meta.primary_formation.includes('4-3-3')) currentPitchFormation = '4-3-3';
@@ -3918,7 +3977,7 @@ function drawRadarChart() {
     }
 
     // 2. Spokes and axis labels
-    ctx.font = '10px Outfit, sans-serif';
+    ctx.font = '10px "Plus Jakarta Sans", sans-serif';
     ctx.fillStyle = '#94a3b8';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -4010,7 +4069,7 @@ function drawRadarChart() {
   }
 
   // 2. Spokes and axis labels
-  ctx.font = '10.5px Outfit, sans-serif';
+  ctx.font = '10.5px "Plus Jakarta Sans", sans-serif';
   ctx.fillStyle = '#94a3b8';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -4337,7 +4396,7 @@ function drawScatterPlot(candidates, star) {
   }
 
   // Axis Labels & Ticks
-  ctx.font = '10.5px Outfit, sans-serif';
+  ctx.font = '10.5px "Plus Jakarta Sans", sans-serif';
   ctx.fillStyle = '#64748b';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
@@ -4358,7 +4417,7 @@ function drawScatterPlot(candidates, star) {
 
   // Axis Titles
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '11.5px Outfit, sans-serif';
+  ctx.font = '11.5px "Plus Jakarta Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(xLabel, padLeft + plotW / 2, height - padBottom + 28);
 
@@ -4415,7 +4474,7 @@ function drawScatterPlot(candidates, star) {
 
       // Label
       ctx.fillStyle = '#fff';
-      ctx.font = '10px Outfit, sans-serif';
+      ctx.font = '10px "Plus Jakarta Sans", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(c.name.split(' ').pop(), px, py - 12);
     }
@@ -4447,7 +4506,7 @@ function drawScatterPlot(candidates, star) {
   ctx.stroke();
 
   ctx.fillStyle = '#06b6d4';
-  ctx.font = 'bold 11px Outfit, sans-serif';
+  ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(`★ ${star.name.split(' ').pop()} (Benchmark)`, spx, spy - 14);
 
@@ -4890,6 +4949,7 @@ function setupPitchControls() {
 }
 
 function renderAmortizationCalculator() {
+  if (!document.getElementById('ffpSection')) return;
   const activeStar = currentEntityMode === 'coaches' ? getActiveCoachData() : getActiveStarData();
   const cand = currentEntityMode === 'coaches' ? currentCoachCandidate : currentCandidate;
   if (!activeStar) return;
@@ -5072,6 +5132,11 @@ function updateDeepLinkUrl() {
   params.set('mode', currentEntityMode);
   if (activeStar) {
     params.set('star', activeStar.name.toLowerCase().replace(/\s+/g, '-'));
+    try {
+      localStorage.setItem('tactical_selected_mode', currentEntityMode);
+      localStorage.setItem('tactical_selected_star', activeStar.name.toLowerCase().replace(/\s+/g, '-'));
+      localStorage.setItem('tactical_selected_horizon', planningHorizon);
+    } catch (e) {}
   }
   if (cand) {
     params.set('cand', cand.name.toLowerCase().replace(/\s+/g, '-'));
@@ -5083,8 +5148,19 @@ function updateDeepLinkUrl() {
     params.set('horizon', planningHorizon);
   }
 
-  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  const queryStr = params.toString();
+  const newUrl = `${window.location.pathname}?${queryStr}`;
   window.history.replaceState(null, '', newUrl);
+
+  // Synchronize query parameters across multi-page suite navigation links
+  const pageLinks = document.querySelectorAll('.suite-tab');
+  pageLinks.forEach(link => {
+    const rawHref = link.getAttribute('href');
+    if (rawHref && !rawHref.startsWith('#')) {
+      const pageBase = rawHref.split('?')[0];
+      link.setAttribute('href', `${pageBase}?${queryStr}`);
+    }
+  });
 }
 
 function setupShareButton() {
@@ -5133,10 +5209,22 @@ function showToast(message) {
 
 function parseUrlParamsOnLoad() {
   const params = new URLSearchParams(window.location.search);
-  const mode = params.get('mode');
-  const starParam = params.get('star');
-  const formParam = params.get('form');
-  const horizonParam = params.get('horizon');
+  let mode = params.get('mode');
+  let starParam = params.get('star');
+  let formParam = params.get('form');
+  let horizonParam = params.get('horizon');
+
+  try {
+    if (!mode) mode = localStorage.getItem('tactical_selected_mode');
+    if (!starParam) starParam = localStorage.getItem('tactical_selected_star');
+    if (!horizonParam) horizonParam = localStorage.getItem('tactical_selected_horizon');
+  } catch (e) {}
+
+  if (params.get('autoTop3') === '1') {
+    setTimeout(() => {
+      if (typeof setTop3MultiCompare === 'function') setTop3MultiCompare();
+    }, 150);
+  }
 
   if (formParam && FORMATIONS_MAP[formParam]) {
     currentPitchFormation = formParam;

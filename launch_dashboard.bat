@@ -1,11 +1,25 @@
 @echo off
+setlocal enabledelayedexpansion
 title Tactical Void Dashboard Launcher
-echo ========================================================
-echo  Starting Tactical Void & Drop-In Replacement Engine...
-echo ========================================================
-python serve_engine.py
-if errorlevel 1 (
-    echo Python not found in PATH, trying workspace virtualenv...
-    "..\.venv\Scripts\python.exe" serve_engine.py
+echo ======================================================================
+echo   ⚡ STARTING TACTICAL VOID & DROP-IN REPLACEMENT ENGINE (LIVE ML)
+echo ======================================================================
+
+set "PY_CMD="
+if exist "..\.venv\Scripts\python.exe" (
+    set "PY_CMD=..\.venv\Scripts\python.exe"
+) else if exist ".\.venv\Scripts\python.exe" (
+    set "PY_CMD=.\.venv\Scripts\python.exe"
+) else (
+    where python >nul 2>nul
+    if !errorlevel! equ 0 set "PY_CMD=python"
 )
+
+if "%PY_CMD%"=="" (
+    echo [ERROR] Python not found in PATH or virtualenv!
+    pause
+    exit /b 1
+)
+
+%PY_CMD% serve_engine.py
 pause

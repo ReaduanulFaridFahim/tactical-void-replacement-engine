@@ -24,9 +24,12 @@ if sys.stdout.encoding != 'utf-8':
     except Exception:
         pass
 
-DATA_DIR = 'data'
-OUTPUT_JSON = 'tactical_replacement_engine/tactical_engine_data.json'
-OUTPUT_JS = 'tactical_replacement_engine/data.js'
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(SCRIPT_DIR)
+DATA_DIR = os.path.join(BASE_DIR, 'data') if os.path.exists(os.path.join(BASE_DIR, 'data')) else os.path.join(SCRIPT_DIR, 'data')
+OUTPUT_JSON = os.path.join(SCRIPT_DIR, 'tactical_engine_data.json')
+OUTPUT_JS = os.path.join(SCRIPT_DIR, 'data.js')
+
 
 NAME_NORM_MAP = {
     'Jrgen Klopp': 'Jürgen Klopp',

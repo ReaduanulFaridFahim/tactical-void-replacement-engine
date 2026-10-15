@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3-Way Radar & Scatter Lab - Tactical Replacement Engine</title>
+  <meta name="description" content="Quantifying post-departure tactical voids and recommending budget-compliant drop-in tactical replacements using Transfermarkt data.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    
+    <!-- Top Hero Header -->
+    <header class="hero-header">
+      <div class="hero-badge-wrap">
+        <span class="engine-badge" id="engineStatusBadge">The Tactical Void & Drop-In Replacement Engine</span>
+        <span class="engine-badge" style="border-color: rgba(139,92,246,0.35); color: var(--accent-purple);" id="engineSubBadge">1.89M Player Appearances • 176K Manager Matches</span>
+      </div>
+
+      <!-- Entity Mode Switcher: Player Mode vs Head Coach Mode -->
+      <div class="mode-switcher-container">
+        <button class="mode-tab-btn active" id="btnModePlayers" title="Scout drop-in replacements for departing star footballers">
+          <span class="mode-tab-icon">⚽</span>
+          <span class="mode-tab-text">Player Replacement Engine</span>
+          <span class="mode-tab-pill" id="pillPlayerCount">44 Dossiers</span>
+        </button>
+        <button class="mode-tab-btn" id="btnModeCoaches" title="Scout drop-in replacements for departing head coaches & managers">
+          <span class="mode-tab-icon">👔</span>
+          <span class="mode-tab-text">Manager & Head Coach Engine</span>
+          <span class="mode-tab-pill coach-pill" id="pillCoachCount">16 Dossiers</span>
+        </button>
+      </div>
+
+      <h1 class="hero-title" id="mainHeroTitle">The Tactical Void & Drop-In Replacement Engine</h1>
+      <p class="hero-subtitle" id="mainHeroSubtitle">
+        Quantifying the sporting decline left behind when superstar talents depart, and recommending optimal, budget-compliant drop-in replacements through multi-dimensional tactical vector similarity.
+      </p>
+
+      <!-- Executive Action Controls Bar -->
+            <div class="executive-actions-bar">
+        <button class="exec-btn" id="btnOpenSandbox" title="Simulate custom hypothetical departures for any player or coach">
+          <span>🧪 What-If Sandbox</span>
+        </button>
+        <button class="exec-btn" id="btnShareFaceoff" title="Copy sharable deep link to this tactical comparison">
+          <span>🔗 Share Comparison</span>
+        </button>
+        <button class="exec-btn exec-btn-accent" id="btnExportDossier" title="Generate and download club executive scouting dossier (PDF)">
+          <span>📄 Export Scouting Dossier</span>
+        </button>
+      </div>
+    </header>
+
+<!-- Search & Horizon Planning Control Bar -->
+    <div class="player-search-wrap">
+      <div class="search-input-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="playerSearchInput" placeholder="Search any player to scout replacements (e.g. Salah, De Bruyne, Saka, Yamal, Messi, Mbappe)..." autocomplete="off">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+      <div class="horizon-toggle-bar">
+        <button class="horizon-btn active" id="btnHorizonImmediate" title="Immediate replacements ready to start right now">
+          <span>⚡ Immediate Like-for-Like</span>
+        </button>
+        <button class="horizon-btn" id="btnHorizonSuccession" title="Young emerging talents aged 17-23 to groom over 2-3 seasons">
+          <span>🔮 2-3 Year Succession Horizon</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Marquee Departure & Succession Dossiers Selector Track -->
+    <section class="departure-section" aria-label="Marquee Transfers & Succession Dossiers">
+      <div class="section-label-bar">
+        <div class="category-tabs-track" id="categoryTabsTrack">
+          <button class="cat-tab-btn active" id="tabAll">All Dossiers (44)</button>
+          <button class="cat-tab-btn" id="tabSeason2627">🔥 26/27 Season Departures (12)</button>
+          <button class="cat-tab-btn" id="tabHistorical">Historical Departures (13)</button>
+          <button class="cat-tab-btn" id="tabSuccession">Succession Planning (19)</button>
+        </div>
+        <span id="transferCountLabel" style="font-size: 0.8rem; color: var(--accent-cyan); font-weight: 700;">44 High-Impact Dossiers</span>
+      </div>
+      <div class="player-chips-track" id="departureChipsTrack">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </section>
+
+    
+<!-- Head-to-Head Tactical Radar Workbench -->
+    <section class="radar-workbench" id="radarWorkbenchSection">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-title">
+            <span>🕸️ Head-to-Head Tactical Radar Comparison</span>
+          </h2>
+          <div class="card-subtext" id="radarSubtext">Role-adaptive radar polygon calibrated across key position metrics & percentiles</div>
+        </div>
+      </div>
+
+      <!-- Face-off Photos Banner -->
+      <!-- Interactive Face-off Banner (1-on-1 or 3-Way Multi-Faceoff) -->
+      <div class="faceoff-banner" id="faceoffBanner">
+        <div class="faceoff-player star-side">
+          <div class="faceoff-avatar-wrap">
+            <img id="faceoffStarImg" class="faceoff-photo" src="" alt="Star" style="display: none;" onerror="this.style.display='none'; document.getElementById('faceoffStarInitials').style.display='flex';" />
+            <div id="faceoffStarInitials" class="faceoff-initials">JB</div>
+          </div>
+          <div class="faceoff-info">
+            <div class="faceoff-tag">Departed Star Benchmark</div>
+            <div class="faceoff-name" id="faceoffStarName">Jude Bellingham</div>
+            <div class="faceoff-sub" id="faceoffStarClub">Borussia Dortmund</div>
+          </div>
+        </div>
+
+        <div class="faceoff-vs-badge" id="faceoffVsBadge">
+          <span class="vs-text" id="faceoffVsText">⚡ VS ⚡</span>
+          <span class="vs-match-index" id="faceoffMatchScore">94.8% Match</span>
+        </div>
+
+        <div class="faceoff-candidates-container" id="faceoffCandidatesContainer">
+          <div class="faceoff-player cand-side">
+            <div class="faceoff-info" style="text-align: right;">
+              <div class="faceoff-tag" style="color: var(--accent-purple);">Target Drop-In Candidate</div>
+              <div class="faceoff-name" id="faceoffCandName">Selected Candidate</div>
+              <div class="faceoff-sub" id="faceoffCandClub">Scouted Club</div>
+            </div>
+            <div class="faceoff-avatar-wrap">
+              <img id="faceoffCandImg" class="faceoff-photo" src="" alt="Candidate" style="display: none;" onerror="this.style.display='none'; document.getElementById('faceoffCandInitials').style.display='flex';" />
+              <div id="faceoffCandInitials" class="faceoff-initials" style="background: linear-gradient(135deg, var(--accent-purple), #ec4899);">SC</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-Way Multi-Candidate Faceoff Control Toolbar -->
+      <div class="multi-compare-toolbar" id="multiCompareToolbar">
+        <div class="multi-toolbar-left">
+          <span class="multi-toolbar-lbl">🎯 Multi-Radar Faceoff Cohort:</span>
+          <div class="multi-slots-summary" id="multiSlotsSummary">
+            <!-- Dynamically populated candidate slot chips -->
+          </div>
+        </div>
+        <div class="multi-actions-btns">
+          <button class="multi-action-btn" id="btnAutoTop3" title="Instantly load the top 3 drop-in replacements into the 3-way radar faceoff">
+            ⚡ Compare Top 3 Auto
+          </button>
+          <button class="multi-action-btn multi-action-btn-ghost" id="btnResetSingle" title="Reset comparison to single primary candidate">
+            ✕ Reset to 1-on-1
+          </button>
+        </div>
+      </div>
+
+      <!-- Head-to-Head Technical Director Verdict Banner -->
+      <div class="radar-verdict-banner" id="radarVerdictBanner">
+        <div class="radar-verdict-icon">🧠</div>
+        <div class="radar-verdict-body">
+          <div class="radar-verdict-title">TECHNICAL DIRECTOR EXECUTIVE VERDICT</div>
+          <p class="radar-verdict-text" id="radarVerdictText">
+            Evaluating candidate compatibility, metric replication index, and fee arbitrage efficiency...
+          </p>
+        </div>
+      </div>
+
+      <div class="radar-layout">
+        
+        <!-- Radar Canvas -->
+        <div class="radar-canvas-wrap">
+          <canvas id="radarCanvas" width="380" height="380"></canvas>
+          <div class="radar-legend" id="radarLegend">
+            <!-- Rendered dynamically via JavaScript; fallbacks provided for static audit -->
+            <div class="legend-item"><span class="legend-dot legend-star"></span><span id="legendStarName">Departed Star</span></div>
+            <div class="legend-item"><span class="legend-dot legend-cand"></span><span id="legendCandName">Target Candidate</span></div>
+          </div>
+        </div>
+
+        <!-- Comparative Metrics Table -->
+        <div class="comparison-table-wrap">
+          <table class="comp-table" id="compTable">
+            <thead id="compTableHead">
+              <!-- Dynamically populated multi-candidate columns; fallback row provided -->
+              <tr>
+                <th>Tactical Metric / Dimension</th>
+                <th class="star-col" id="thStarName">Departed Star</th>
+                <th class="cand-col" id="thCandName">Target Candidate</th>
+                <th class="summary-col">Cohort Analysis & Edge</th>
+              </tr>
+            </thead>
+            <tbody id="compTableBody">
+              <!-- Rendered dynamically via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Multi-Candidate Tactical Scatter Plot Workbench -->
+    <section class="scatter-section" id="scatterSection">
+      <div class="scatter-header-bar">
+        <div>
+          <h2 class="card-title">
+            <span>📍 Multi-Candidate Tactical Scatter Plot & Cluster Analysis</span>
+          </h2>
+          <div class="card-subtext" id="scatterSubtext">Visualizing drop-in candidate cluster across key position outputs</div>
+        </div>
+        <div class="scatter-mode-toggle">
+          <button class="scatter-mode-btn active" id="btnScatterRoleMetrics">⚡ Role Core Metrics</button>
+          <button class="scatter-mode-btn" id="btnScatterFinancial">💰 Financial Arbitrage vs Match</button>
+        </div>
+      </div>
+
+      <div class="scatter-container">
+        <canvas id="scatterCanvas" width="900" height="420"></canvas>
+        <div class="scatter-tooltip" id="scatterTooltip"></div>
+      </div>
+
+      <div class="scatter-legend">
+        <div><span class="scatter-legend-dot" style="background: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan);"></span> <strong id="scatterLegendStar">Departed Star</strong></div>
+        <div><span class="scatter-legend-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span> <strong>Top 3 Recommendations</strong></div>
+        <div><span class="scatter-legend-dot" style="background: var(--accent-purple); box-shadow: 0 0 8px var(--accent-purple);"></span> <strong>Other Shortlisted Candidates</strong></div>
+        <div><span class="scatter-legend-dot" style="background: #475569;"></span> <strong>Filtered Catalog Players</strong></div>
+      </div>
+    </section>
+
+    
+<!-- What-If Custom Departure Sandbox Modal -->
+    <div class="modal-overlay" id="sandboxModal" style="display: none;">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span style="font-size: 1.4rem;">🧪</span>
+            <div>
+              <h3 class="modal-title">What-If Departure Simulation Sandbox</h3>
+              <p class="modal-sub">Simulate hypothetical departures for ANY player or coach across European football</p>
+            </div>
+          </div>
+          <button class="modal-close-btn" id="btnCloseSandbox" aria-label="Close Sandbox Modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="sandbox-search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="sandbox-search-input" id="sandboxSearchInput" placeholder="Search ANY player or coach to simulate (e.g. Saka, Musiala, Rodri, Saliba, Yamal, Arteta)..." autocomplete="off">
+            <div class="search-dropdown" id="sandboxSearchDropdown"></div>
+          </div>
+
+          <div class="sandbox-results-panel" id="sandboxResultsPanel" style="display: none;">
+            <div class="sandbox-hero-box" id="sandboxHeroBox"></div>
+            <div class="sandbox-void-meter-wrap" id="sandboxVoidMeterWrap"></div>
+            <div class="sandbox-recs-title">🎯 Instant Recommended Drop-In Replacements:</div>
+            <div class="sandbox-recs-grid" id="sandboxRecsGrid"></div>
+            <button class="sandbox-apply-btn" id="btnApplySandbox">🚀 Load as Active Departure in Dashboard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Executive Scouting Dossier Printable Modal -->
+    <div class="modal-overlay" id="dossierModal" style="display: none;">
+      <div class="modal-box dossier-modal-box">
+        <div class="modal-header no-print">
+          <div class="modal-title-wrap">
+            <span style="font-size: 1.4rem;">📄</span>
+            <div>
+              <h3 class="modal-title">Official Club Executive Scouting Dossier</h3>
+              <p class="modal-sub">Confidential Sporting Director Technical Transfer Briefing</p>
+            </div>
+          </div>
+          <div class="modal-actions-right">
+            <button class="dossier-print-btn" id="btnPrintDossier">🖨️ Print / Save as PDF</button>
+            <button class="modal-close-btn" id="btnCloseDossier" aria-label="Close Dossier Modal">&times;</button>
+          </div>
+        </div>
+
+        <div class="dossier-printable-content" id="dossierPrintableContent">
+          <!-- Dynamically populated executive briefing report via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div class="toast-banner" id="toastBanner" style="display: none;">
+      <span class="toast-icon">⚡</span>
+      <span class="toast-message" id="toastMessage">Link copied to clipboard!</span>
+    </div>
+
+    <!-- Floating Back to Top Button -->
+    <button class="btn-back-to-top" id="btnBackToTop" title="Scroll back to top (or press Home)" aria-label="Back to top">
+      <span>↑</span>
+    </button>
+
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

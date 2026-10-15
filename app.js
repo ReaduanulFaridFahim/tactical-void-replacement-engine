@@ -229,7 +229,7 @@ function setEntityMode(mode) {
     if (btnPlayers) btnPlayers.classList.add('active');
     if (btnCoaches) btnCoaches.classList.remove('active');
 
-    if (heroTitle) heroTitle.textContent = 'The Tactical Void & Drop-In Replacement Engine';
+    if (heroTitle) heroTitle.textContent = 'Football Transfer Market Prediction';
     if (heroSubtitle) heroSubtitle.textContent = 'Quantifying the sporting decline left behind when superstar talents depart, and recommending optimal, budget-compliant drop-in replacements through multi-dimensional tactical vector similarity.';
     if (searchInput) searchInput.placeholder = 'Search any player to scout replacements (e.g. Salah, De Bruyne, Saka, Yamal, Messi, Mbappe)...';
     if (horizonImm) horizonImm.innerHTML = '<span>⚡ Immediate Like-for-Like</span>';
@@ -261,7 +261,7 @@ function setEntityMode(mode) {
     if (btnCoaches) btnCoaches.classList.add('active');
     if (btnPlayers) btnPlayers.classList.remove('active');
 
-    if (heroTitle) heroTitle.textContent = 'The Tactical Void & Drop-In Manager Replacement Engine';
+    if (heroTitle) heroTitle.textContent = 'Football Transfer Market Prediction (Manager Edition)';
     if (heroSubtitle) heroSubtitle.textContent = 'Quantifying the managerial sporting void when talismanic head coaches depart, and recommending optimal, philosophy-aligned drop-in managers through tactical system similarity.';
     if (searchInput) searchInput.placeholder = 'Search any manager to scout replacements (e.g. Xabi Alonso, Klopp, Guardiola, Nagelsmann, Amorim, Motta)...';
     if (horizonImm) horizonImm.innerHTML = '<span>⚡ Immediate Drop-In Manager</span>';

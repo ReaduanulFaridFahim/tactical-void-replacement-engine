@@ -41,6 +41,7 @@ let activeMlModel = 'ensemble'; // 'ensemble' | 'catboost' | 'lightgbm'
 let mlServerOnline = false;
 let multiComparisonCandidates = [];
 let multiComparisonCoachCandidates = [];
+let currentRecSortMode = 'match'; // 'match' | 'arbitrage' | 'similarity' | 'youth' | 'goals'
 const MULTI_CANDIDATE_COLORS = [
   { fill: 'rgba(168, 85, 247, 0.28)', stroke: '#a855f7', name: 'Slot 1 (Primary)', hex: '#a855f7', textClass: 'cand-col-1', dotClass: 'legend-cand-1' },
   { fill: 'rgba(16, 185, 129, 0.28)', stroke: '#10b981', name: 'Slot 2 (Alt A)', hex: '#10b981', textClass: 'cand-col-2', dotClass: 'legend-cand-2' },
@@ -567,23 +568,23 @@ function setupMlPresets() {
 // EXECUTIVE MULTI-PAGE SUITE NAVIGATION
 // -----------------------------------------------------------------------------
 function setupPageNavigation() {
-  const pageNav = document.querySelector('.header-suite-tabs');
-  if (!pageNav) return;
+  const pageNav = document.querySelector('.header-suite-tabs') || document.querySelector('.suite-navbar');
+  if (pageNav) {
+    const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+    const links = document.querySelectorAll('.suite-tab, .nav-link-item');
 
-  const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-  const links = pageNav.querySelectorAll('.suite-tab');
-
-  links.forEach(link => {
-    const rawHref = link.getAttribute('href');
-    if (rawHref) {
-      const pageBase = rawHref.split('?')[0];
-      if (pageBase === currentPath || (currentPath === '' && pageBase === 'index.html')) {
-        link.classList.add('active');
-      } else if (!pageBase.startsWith('#')) {
-        link.classList.remove('active');
+    links.forEach(link => {
+      const rawHref = link.getAttribute('href');
+      if (rawHref) {
+        const pageBase = rawHref.split('?')[0];
+        if (pageBase === currentPath || (currentPath === '' && pageBase === 'index.html')) {
+          link.classList.add('active');
+        } else if (!pageBase.startsWith('#')) {
+          link.classList.remove('active');
+        }
       }
-    }
-  });
+    });
+  }
 
   // Floating Back to Top Button
   const btnTop = document.getElementById('btnBackToTop');
@@ -602,9 +603,28 @@ function setupPageNavigation() {
   }
 }
 
+function setupRecommendationSortPills() {
+  const sortPills = document.querySelectorAll('.rec-sort-btn');
+  if (!sortPills.length) return;
+  sortPills.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.sort;
+      if (!mode) return;
+      currentRecSortMode = mode;
+      sortPills.forEach(b => b.classList.toggle('active', b === btn));
+      if (currentEntityMode === 'coaches') {
+        renderCoachRecommendations();
+      } else {
+        renderRecommendations();
+      }
+    });
+  });
+}
+
 function setupExecutiveDock() {
   // Backwards-compatible alias for multi-page suite navigation
   setupPageNavigation();
+  setupRecommendationSortPills();
 }
 
 // -----------------------------------------------------------------------------
@@ -2188,7 +2208,22 @@ function renderRecommendations() {
     return true;
   });
 
-  filtered.sort((a, b) => b.composite_match_score - a.composite_match_score);
+  // Dynamic Multi-Mode Sorting
+  if (currentRecSortMode === 'arbitrage') {
+    filtered.sort((a, b) => (a.market_value_in_eur || 0) - (b.market_value_in_eur || 0));
+  } else if (currentRecSortMode === 'similarity') {
+    filtered.sort((a, b) => (b.tactical_similarity_score || b.composite_match_score || 0) - (a.tactical_similarity_score || a.composite_match_score || 0));
+  } else if (currentRecSortMode === 'youth') {
+    filtered.sort((a, b) => (a.age || 99) - (b.age || 99));
+  } else if (currentRecSortMode === 'goals') {
+    filtered.sort((a, b) => {
+      const gA = (a.goals_per_90 || 0) + (a.assists_per_90 || 0);
+      const gB = (b.goals_per_90 || 0) + (b.assists_per_90 || 0);
+      return gB - gA;
+    });
+  } else {
+    filtered.sort((a, b) => b.composite_match_score - a.composite_match_score);
+  }
 
   const countBadge = document.getElementById('filteredCandidatesCount');
   if (countBadge) {
@@ -2583,10 +2618,17 @@ function renderCoachRecommendations() {
     filtered = baseCandidates.slice(0, 3);
   }
 
-  // Sort by composite match score descending (pinned first)
+  // Sort by mode descending (pinned first)
   filtered.sort((a, b) => {
     if (a.is_custom_pinned && !b.is_custom_pinned) return -1;
     if (!a.is_custom_pinned && b.is_custom_pinned) return 1;
+    if (currentRecSortMode === 'arbitrage') {
+      return (a.annual_wage_eur || 0) - (b.annual_wage_eur || 0);
+    } else if (currentRecSortMode === 'similarity') {
+      return (b.tactical_similarity_score || b.composite_match_score || 0) - (a.tactical_similarity_score || a.composite_match_score || 0);
+    } else if (currentRecSortMode === 'youth') {
+      return (a.age || 99) - (b.age || 99);
+    }
     return b.composite_match_score - a.composite_match_score;
   });
 
@@ -4670,6 +4712,11 @@ const CLUB_ROSTERS_MAP = {
     'CDM': 'Palhinha', 'CM': 'Kimmich', 'LCM': 'Pavlovic', 'RCM': 'Kimmich', 'CAM': 'Musiala',
     'LW': 'Coman', 'CF': 'Kane', 'RW': 'Olise'
   },
+  'FC Bayern Munich': {
+    'GK': 'Neuer', 'LB': 'Davies', 'CB': 'Upamecano', 'LCB': 'Kim', 'RCB': 'Upamecano', 'RB': 'Boey',
+    'CDM': 'Palhinha', 'CM': 'Kimmich', 'LCM': 'Pavlovic', 'RCM': 'Kimmich', 'CAM': 'Musiala',
+    'LW': 'Coman', 'CF': 'Kane', 'RW': 'Olise'
+  },
   'Paris Saint-Germain': {
     'GK': 'Donnarumma', 'LB': 'Mendes', 'CB': 'Marquinhos', 'LCB': 'Pacho', 'RCB': 'Marquinhos', 'RB': 'Hakimi',
     'CDM': 'Vitinha', 'CM': 'Zaire-Emery', 'LCM': 'Neves', 'RCM': 'Zaire-Emery', 'CAM': 'Vitinha',
@@ -4679,6 +4726,96 @@ const CLUB_ROSTERS_MAP = {
     'GK': 'Kobel', 'LB': 'Bensebaini', 'CB': 'Schlotterbeck', 'LCB': 'Schlotterbeck', 'RCB': 'Anton', 'RB': 'Ryerson',
     'CDM': 'Can', 'CM': 'Sabitzer', 'LCM': 'Gross', 'RCM': 'Sabitzer', 'CAM': 'Brandt',
     'LW': 'Gittens', 'CF': 'Guirassy', 'RW': 'Adeyemi'
+  },
+  'Newcastle United': {
+    'GK': 'Pope', 'LB': 'Hall', 'CB': 'Botman', 'LCB': 'Botman', 'RCB': 'Schär', 'RB': 'Livramento',
+    'CDM': 'Guimarães', 'CM': 'Tonali', 'LCM': 'Joelinton', 'RCM': 'Tonali', 'CAM': 'Tonali',
+    'LW': 'Gordon', 'CF': 'Isak', 'RW': 'Murphy'
+  },
+  'Bayer 04 Leverkusen': {
+    'GK': 'Hradecky', 'LB': 'Grimaldo', 'CB': 'Tah', 'LCB': 'Tapsoba', 'RCB': 'Tah', 'RB': 'Frimpong',
+    'CDM': 'Xhaka', 'CM': 'Palacios', 'LCM': 'Andrich', 'RCM': 'Palacios', 'CAM': 'Wirtz',
+    'LW': 'Terrier', 'CF': 'Boniface', 'RW': 'Hofmann'
+  },
+  'Sporting CP': {
+    'GK': 'Israel', 'LB': 'Reis', 'CB': 'Inacio', 'LCB': 'Inacio', 'RCB': 'Diomande', 'RB': 'Fresneda',
+    'CDM': 'Hjulmand', 'CM': 'Morita', 'LCM': 'Morita', 'RCM': 'Braganca', 'CAM': 'Pote',
+    'LW': 'Pote', 'CF': 'Gyokeres', 'RW': 'Trincao'
+  },
+  'Manchester United': {
+    'GK': 'Onana', 'LB': 'Shaw', 'CB': 'Martinez', 'LCB': 'Martinez', 'RCB': 'De Ligt', 'RB': 'Dalot',
+    'CDM': 'Casero', 'CM': 'Mainoo', 'LCM': 'Mainoo', 'RCM': 'Eriksen', 'CAM': 'Bruno Fernandes',
+    'LW': 'Rashford', 'CF': 'Hojlund', 'RW': 'Garnacho'
+  },
+  'Tottenham Hotspur': {
+    'GK': 'Vicario', 'LB': 'Udogie', 'CB': 'Van de Ven', 'LCB': 'Van de Ven', 'RCB': 'Romero', 'RB': 'Porro',
+    'CDM': 'Bissouma', 'CM': 'Maddison', 'LCM': 'Sarr', 'RCM': 'Maddison', 'CAM': 'Kulusevski',
+    'LW': 'Son', 'CF': 'Solanke', 'RW': 'Johnson'
+  },
+  'Chelsea FC': {
+    'GK': 'Sanchez', 'LB': 'Cucurella', 'CB': 'Colwill', 'LCB': 'Colwill', 'RCB': 'Fofana', 'RB': 'Gusto',
+    'CDM': 'Caicedo', 'CM': 'Enzo', 'LCM': 'Enzo', 'RCM': 'Lavia', 'CAM': 'Palmer',
+    'LW': 'Sancho', 'CF': 'Jackson', 'RW': 'Madueke'
+  },
+  'Aston Villa': {
+    'GK': 'Martinez', 'LB': 'Digne', 'CB': 'Torres', 'LCB': 'Torres', 'RCB': 'Konsa', 'RB': 'Cash',
+    'CDM': 'Onana', 'CM': 'Tielemans', 'LCM': 'Tielemans', 'RCM': 'McGinn', 'CAM': 'Rogers',
+    'LW': 'Ramsey', 'CF': 'Watkins', 'RW': 'Bailey'
+  },
+  'RB Leipzig': {
+    'GK': 'Gulacsi', 'LB': 'Raum', 'CB': 'Orban', 'LCB': 'Castello Jr', 'RCB': 'Orban', 'RB': 'Geertruida',
+    'CDM': 'Seiwald', 'CM': 'Haidara', 'LCM': 'Haidara', 'RCM': 'Baumgartner', 'CAM': 'Simons',
+    'LW': 'Nusa', 'CF': 'Openda', 'RW': 'Sesko'
+  },
+  'SL Benfica': {
+    'GK': 'Trubin', 'LB': 'Carreras', 'CB': 'Otamendi', 'LCB': 'Otamendi', 'RCB': 'Silva', 'RB': 'Bah',
+    'CDM': 'Florentino', 'CM': 'Kokcu', 'LCM': 'Kokcu', 'RCM': 'Aursnes', 'CAM': 'Aursnes',
+    'LW': 'Akturkoglu', 'CF': 'Pavlidis', 'RW': 'Di Maria'
+  },
+  'West Ham United': {
+    'GK': 'Areola', 'LB': 'Emerson', 'CB': 'Kilman', 'LCB': 'Kilman', 'RCB': 'Todibo', 'RB': 'Wan-Bissaka',
+    'CDM': 'Alvarez', 'CM': 'Paqueta', 'LCM': 'Soucek', 'RCM': 'Paqueta', 'CAM': 'Paqueta',
+    'LW': 'Kudus', 'CF': 'Bowen', 'RW': 'Summerville'
+  },
+  'Brighton & Hove Albion': {
+    'GK': 'Verbruggen', 'LB': 'Estupinan', 'CB': 'Dunk', 'LCB': 'Dunk', 'RCB': 'Van Hecke', 'RB': 'Veltman',
+    'CDM': 'Baleba', 'CM': 'Wieffer', 'LCM': 'Wieffer', 'RCM': 'Ayari', 'CAM': 'Rutter',
+    'LW': 'Mitoma', 'CF': 'Welbeck', 'RW': 'Minteh'
+  },
+  'Inter Milan': {
+    'GK': 'Sommer', 'LB': 'Dimarco', 'CB': 'Acerbi', 'LCB': 'Bastoni', 'RCB': 'Pavard', 'RB': 'Dumfries',
+    'CDM': 'Calhanoglu', 'CM': 'Barella', 'LCM': 'Mkhitaryan', 'RCM': 'Barella', 'CAM': 'Barella',
+    'LW': 'Dimarco', 'CF': 'Lautaro', 'RW': 'Thuram'
+  },
+  'Atlético de Madrid': {
+    'GK': 'Oblak', 'LB': 'Reinildo', 'CB': 'Gimenez', 'LCB': 'Gimenez', 'RCB': 'Le Normand', 'RB': 'Llorente',
+    'CDM': 'Koke', 'CM': 'De Paul', 'LCM': 'Gallagher', 'RCM': 'De Paul', 'CAM': 'Griezmann',
+    'LW': 'Riquelme', 'CF': 'Alvarez', 'RW': 'Simeone'
+  },
+  'Stade Rennais FC': {
+    'GK': 'Mandanda', 'LB': 'Truffert', 'CB': 'Ostigard', 'LCB': 'Ostigard', 'RCB': 'Wooh', 'RB': 'Assignon',
+    'CDM': 'Matusiwa', 'CM': 'Santamaria', 'LCM': 'Santamaria', 'RCM': 'Kamara', 'CAM': 'Blas',
+    'LW': 'Gronbaek', 'CF': 'Kalimuendo', 'RW': 'Gouiri'
+  },
+  'AFC Ajax': {
+    'GK': 'Pasveer', 'LB': 'Hato', 'CB': 'Baas', 'LCB': 'Baas', 'RCB': 'Sutalo', 'RB': 'Rensch',
+    'CDM': 'Henderson', 'CM': 'Taylor', 'LCM': 'Taylor', 'RCM': 'Fitz-Jim', 'CAM': 'Klaassen',
+    'LW': 'Godts', 'CF': 'Weghorst', 'RW': 'Traore'
+  },
+  'Inter Miami CF': {
+    'GK': 'Callender', 'LB': 'Alba', 'CB': 'Aviles', 'LCB': 'Aviles', 'RCB': 'Martinez', 'RB': 'Weigandt',
+    'CDM': 'Busquets', 'CM': 'Redondo', 'LCM': 'Redondo', 'RCM': 'Bright', 'CAM': 'Messi',
+    'LW': 'Gomez', 'CF': 'Suarez', 'RW': 'Gressel'
+  },
+  'Juventus FC': {
+    'GK': 'Di Gregorio', 'LB': 'Cambiaso', 'CB': 'Bremer', 'LCB': 'Bremer', 'RCB': 'Gatti', 'RB': 'Kalulu',
+    'CDM': 'Locatelli', 'CM': 'Thuram', 'LCM': 'Thuram', 'RCM': 'McKennie', 'CAM': 'Koopmeiners',
+    'LW': 'Yildiz', 'CF': 'Vlahovic', 'RW': 'Conceicao'
+  },
+  'AC Milan': {
+    'GK': 'Maignan', 'LB': 'Hernandez', 'CB': 'Tomori', 'LCB': 'Tomori', 'RCB': 'Pavlovic', 'RB': 'Emerson',
+    'CDM': 'Fofana', 'CM': 'Reijnders', 'LCM': 'Reijnders', 'RCM': 'Loftus-Cheek', 'CAM': 'Pulisic',
+    'LW': 'Leao', 'CF': 'Morata', 'RW': 'Chukwueze'
   }
 };
 
@@ -4816,8 +4953,10 @@ function renderPitchTacticalBoard() {
   });
 
   const formConfig = FORMATIONS_MAP[currentPitchFormation] || FORMATIONS_MAP['4-3-3'];
-  const clubName = activeStar.club || activeStar.from_club_name || 'Liverpool FC';
-  const clubRoster = CLUB_ROSTERS_MAP[clubName] || null;
+  const rawClub = (activeStar.club || activeStar.from_club_name || activeStar.current_club_name || 'Liverpool FC').trim();
+  const clubRoster = CLUB_ROSTERS_MAP[rawClub] ||
+                     CLUB_ROSTERS_MAP[rawClub.replace(' FC', '').replace('FC ', '')] ||
+                     null;
 
   // Identify the void slot
   const voidSlotId = findVoidSlotId(activeStar, formConfig);
@@ -4853,9 +4992,15 @@ function renderPitchTacticalBoard() {
       if (clubRoster && clubRoster[slot.role]) {
         teammateName = clubRoster[slot.role];
       } else {
-        teammateName = `${slot.label} Player`;
+        const tacticalRoles = {
+          'GK': 'Keeper', 'LB': 'Fullback', 'RB': 'Fullback', 'CB': 'Centre-Back',
+          'LCB': 'Stopper', 'RCB': 'Cover CB', 'CDM': 'Pivot', 'CM': 'Midfield',
+          'LCM': 'Playmaker', 'RCM': 'B2B Engine', 'CAM': 'Playmaker',
+          'LW': 'Wide Forward', 'RW': 'Inside Wing', 'CF': 'Striker'
+        };
+        teammateName = tacticalRoles[slot.role] || `${slot.label}`;
       }
-      labelText = teammateName.split(' ').pop();
+      labelText = (teammateName.includes(' ') && !['FC', 'B2B', 'CAM'].some(s => teammateName.includes(s))) ? teammateName.split(' ').pop() : teammateName;
       avatarContent = `<span class="node-initials">${getInitials(teammateName)}</span>`;
     }
 

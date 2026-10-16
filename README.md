@@ -101,4 +101,4 @@ Hosted on **GitHub Pages**:
 
 ---
 
-**Engineered by RFF @ 26** • *Transfermarkt Pro Analytics • Season 2026/27 Edition*
+**Engineered by RFF @ 26** • *Transfermarkt Pro Data Analytics • Season 2026/27 Edition*
